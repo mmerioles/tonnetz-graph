@@ -31,9 +31,9 @@ uv sync
 ```
 
 ## Usage
-To launch, please run your desired scripts using uv
+To run a test, please run your desired scripts using uv
 ```bash
-uv run main.py
+uv run tests/test_centrality.py
 ```
 
 ## Team Members
