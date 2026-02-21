@@ -31,7 +31,7 @@ uv sync
 ```
 
 ## Usage
-To launch, please run using jupyter notebook using the following. This will launch a new browser window with the notebooks available in the `notebooks` directory
+To launch, please run your desired scripts using uv
 ```bash
 uv run main.py
 ```
