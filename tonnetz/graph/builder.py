@@ -13,7 +13,6 @@ def build_graph(adj: np.ndarray) -> nx.DiGraph:
     edge_weights=[G[u][v]['weight'] for u,v in G.edges()]
     edge_widths=[w*0.3 for w in edge_weights]
 
-
     nx.draw_networkx_edges(G,node_pos,arrows=True,connectionstyle='arc3,rad=0',arrowsize=1,width=edge_widths,edge_color='black')
     nx.draw_networkx_nodes(G,node_pos,node_size=node_sizes,node_color=node_colors,cmap=plt.cm.Blues,alpha=0.95)
     nx.draw_networkx_labels(G,node_pos,font_color='black', font_family='Arial', font_size=5)
