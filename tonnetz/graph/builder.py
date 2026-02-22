@@ -36,6 +36,7 @@ def random_adjacency_graph(n: int = 48) -> np.ndarray:
 
 
 
+
 mat=random_adjacency_graph()
 G=build_graph(mat) 
  
