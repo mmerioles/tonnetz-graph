@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def build_graph(adj: np.ndarray) -> nx.DiGraph:
+
     G=nx.from_numpy_array(adj, create_using=nx.DiGraph())
     node_pos=nx.kamada_kawai_layout(G,scale=5)
     degree_centrality=dict(G.in_degree())
@@ -27,11 +28,11 @@ def build_graph(adj: np.ndarray) -> nx.DiGraph:
 
 
 def random_adjacency_graph(n: int = 48) -> np.ndarray:
+    
     mat=np.random.exponential(0.3,size=(n,n))
     mat=mat/mat.max()
     mat[mat<0.2]=0
 
-    
     return mat
 
 
