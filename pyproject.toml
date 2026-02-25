@@ -20,3 +20,8 @@ dev = ["pytest"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["tonnetz"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

@@ -1,5 +1,5 @@
 import numpy as np
-from builder import random_adjacency_graph
+from .builder import random_adjacency_graph
 import networkx as nx
 from pprint import pprint
 
