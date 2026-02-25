@@ -7,5 +7,5 @@ def find_betweenness_centrality(adj_matrix: np.ndarray) -> dict[str, float]:
 def find_eigenvector_centrality(adj_matrix: np.ndarray) -> dict[str, float]:
     raise NotImplementedError
 
-def find_degree_centrality(adj: np.ndarray) -> dict[int, float]:
+def find_degree_centrality(adj_matrix: np.ndarray) -> dict[int, float]:
     raise NotImplementedError
