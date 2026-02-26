@@ -11,8 +11,3 @@ def build_random_adjacency_matrix(n: int = 48) -> np.ndarray:
     mat=mat/mat.max()
     mat[mat<0.2]=0
     return mat
-
-if __name__ == "__main__":
-    mat=build_random_adjacency_matrix()
-    G=build_graph(mat) 
- 
