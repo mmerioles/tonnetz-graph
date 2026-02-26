@@ -20,10 +20,10 @@ def simple_adj():
 
 @pytest.fixture
 def random_adj():
-    """Mirrors your random_adjacency_graph() output."""
-    from tonnetz.graph.builder import random_adjacency_graph
+    """Mirrors your build_random_adjacency_matrix() output."""
+    from tonnetz.graph.builder import build_random_adjacency_matrix
     np.random.seed(42)
-    return random_adjacency_graph()
+    return build_random_adjacency_matrix()
 
 
 # --- Return type tests ---

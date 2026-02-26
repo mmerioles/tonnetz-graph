@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-from .builder import random_adjacency_graph
+from .builder import build_random_adjacency_matrix
 
 
 def find_betweenness_centrality(adj_matrix: np.ndarray) -> dict[str, float]:
@@ -81,10 +81,10 @@ def _print_top(label: str, scores: dict, top_n: int = 10) -> None:
 
 
 if __name__ == "__main__":
-    from tonnetz.graph.builder import random_adjacency_graph
+    from tonnetz.graph.builder import build_random_adjacency_matrix
 
     np.random.seed(42)
-    adj = random_adjacency_graph()
+    adj = build_random_adjacency_matrix()
 
     print("\nComputing centralities on a 48-node Tonnetz graph...")
 
