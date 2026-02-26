@@ -62,7 +62,8 @@ def gen_transition_from_mono_midi(midi_file: str, target_channel=1) -> np.ndarra
     row_sums = transition_matrix.sum(axis=1, keepdims=True)
 
     # Avoid division by zero; if a row sum is zero, keep it as zero
-    transition_matrix = np.divide(transition_matrix, row_sums, where=row_sums != 0)
+    transition_matrix = transition_matrix.astype(float)
+    np.divide(transition_matrix, row_sums, out=transition_matrix, where=row_sums != 0)
 
     # Threshold values below 0.01 to zero for cleaner visualization
     threshold = 0.01
