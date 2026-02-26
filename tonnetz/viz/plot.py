@@ -10,7 +10,9 @@ def create_note_labels() -> dict:
 
 
 def plot_graph(
-    input_graph: nx.DiGraph, show_isolated_nodes: bool = False, show: bool = True
+    input_graph: nx.DiGraph, 
+    show_isolated_nodes: bool = False, 
+    show: bool = True
 ) -> None:
     G = input_graph
 

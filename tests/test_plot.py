@@ -8,9 +8,9 @@ def random_adj():
 
 def test_compile(random_adj):
     G = build_graph(random_adj)
-    plot_graph(G)
+    plot_graph(G, show=False)
 
 if __name__ == "__main__":
     random_adj = build_random_adjacency_matrix()
     G = build_graph(random_adj)
-    plot_graph(G, show=True)
+    plot_graph(G)
