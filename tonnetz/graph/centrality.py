@@ -77,3 +77,10 @@ def print_top(label: str, scores: dict, top_n: int = 10) -> None:
     print(f"{'='*40}")
     for rank, (node, score) in enumerate(ranked, start=1):
         print(f"  {rank:>2}. Node {str(node):>3}  →  {score:.6f}")
+
+def print_centralities(adj_matrix: np.ndarray) -> None:
+    print("\nComputing centralities on a 48-node Tonnetz graph...")
+
+    print_top("Degree (in-degree) Centrality", find_degree_centrality(adj_matrix))
+    print_top("Betweenness Centrality",        find_betweenness_centrality(adj_matrix))
+    print_top("Eigenvector Centrality",        find_eigenvector_centrality(adj_matrix))

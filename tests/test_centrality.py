@@ -5,7 +5,8 @@ from tonnetz.graph.centrality import (
     find_betweenness_centrality,
     find_eigenvector_centrality,
     find_degree_centrality,
-    print_top
+    print_top,
+    print_centralities
 )
 
 # --- Fixtures ---
@@ -73,9 +74,4 @@ def test_random_graph_node_count(random_adj):
 
 if __name__ == "__main__":
     adj = build_random_adjacency_matrix()
-
-    print("\nComputing centralities on a 48-node Tonnetz graph...")
-
-    print_top("Degree (in-degree) Centrality", find_degree_centrality(adj))
-    print_top("Betweenness Centrality",        find_betweenness_centrality(adj))
-    print_top("Eigenvector Centrality",        find_eigenvector_centrality(adj))
+    print_centralities(adj)
