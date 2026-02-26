@@ -42,7 +42,7 @@ uv run tests/test_plot.py # Debug print graph
 ```
 To smoke check against pytest, simply run the following
 ```bash
-pytest
+uv run pytest
 ```
 
 ## Team Members
