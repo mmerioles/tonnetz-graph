@@ -9,12 +9,11 @@ def create_note_labels() -> dict:
     return {i: f"{note_names[i % 12]}{i // 12 + 2}" for i in range(48)}
 
 
-def plot_graph(
-    input_graph: nx.DiGraph, 
-    show_isolated_nodes: bool = False, 
-    show: bool = True,
-    name: str = 'Network Graph'
-) -> None:
+def plot_graph(input_graph: nx.DiGraph, 
+               show_isolated_nodes: bool = False, 
+               show: bool = True,
+               name: str = 'Network Graph') -> None:
+    
     G = input_graph
 
     # Remove isolated nodes
@@ -29,7 +28,7 @@ def plot_graph(
     node_pos = nx.kamada_kawai_layout(G, scale=5)
     degree_centrality = dict(G.in_degree())
     node_colors = [degree_centrality[n] for n in G.nodes()]
-    node_sizes = 1000
+    node_sizes = [max(degree_centrality[n] * 60, 40) for n in G.nodes()]
     edge_weights = [G[u][v]["weight"] for u, v in G.edges()]
     edge_widths = [w * 0.3 for w in edge_weights]
 
@@ -38,7 +37,7 @@ def plot_graph(
         node_pos,
         arrows=True,
         connectionstyle="arc3,rad=0",
-        arrowsize=1,
+        arrowsize=3,
         width=edge_widths,
         edge_color="black",
     )
