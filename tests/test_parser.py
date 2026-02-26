@@ -4,7 +4,9 @@ import numpy as np
 from tonnetz.midi.parser import gen_transition_from_mono_midi
 
 
-def test_gen_transition_from_mono_midi(filename, channel_number):
+def test_gen_transition_from_mono_midi():
+    filename = "My_Heart_Will_Go_On.mid"
+    channel_number = 4
     # Path to MIDI file
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
@@ -25,6 +27,4 @@ def test_gen_transition_from_mono_midi(filename, channel_number):
 
 
 if __name__ == "__main__":
-    filename = "My_Heart_Will_Go_On.mid"
-    channel_number = 4
-    test_gen_transition_from_mono_midi(filename, channel_number)
+    test_gen_transition_from_mono_midi()
