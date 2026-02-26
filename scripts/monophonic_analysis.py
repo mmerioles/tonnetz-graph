@@ -13,6 +13,6 @@ midi_file = os.path.join(project_root, "raw_midi", filename)
 transition_matrix = gen_transition_from_mono_midi(midi_file, channel_number)
 
 G = build_graph(transition_matrix)
-plot_graph(G, show_isolated_nodes=False, show=True)
+plot_graph(G, show_isolated_nodes=False, show=True, name=filename)
 
 # TODO: Visualisation: display info about MIDI file, statistics
