@@ -9,11 +9,13 @@ def create_note_labels() -> dict:
     return {i: f"{note_names[i % 12]}{i // 12 + 2}" for i in range(48)}
 
 
-def plot_graph(input_graph: nx.DiGraph, 
-               show_isolated_nodes: bool = False, 
-               show: bool = True,
-               name: str = 'Network Graph') -> None:
-    
+def plot_graph(
+    input_graph: nx.DiGraph,
+    show_isolated_nodes: bool = False,
+    show: bool = True,
+    name: str = "Network Graph",
+) -> None:
+
     G = input_graph
 
     # Remove isolated nodes
@@ -71,8 +73,20 @@ def plot_graph(input_graph: nx.DiGraph,
         plt.show()
 
 
-def plot_degree_distribution(adj: np.ndarray) -> plt.Figure:
-    raise NotImplementedError
+def plot_degree_distribution(
+    degree_distribution: dict[int, float], show: bool = True
+) -> None:
+    """Plot Histogram of degree distribution."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    degrees = list(degree_distribution.keys())
+    counts = list(degree_distribution.values())
+    ax.bar(degrees, counts, color="blue", alpha=0.7)
+    ax.set_xlabel("Degree")
+    ax.set_ylabel("Count")
+    ax.set_title("Degree Distribution Histogram")
+    plt.tight_layout()
+    if show:
+        plt.show()
 
 
 def plot_centrality(adj: np.ndarray, centrality: dict[int, float]) -> plt.Figure:

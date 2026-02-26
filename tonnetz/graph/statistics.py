@@ -1,6 +1,7 @@
 import numpy as np
 import networkx as nx
 
+
 class Stats:
     @staticmethod
     def find_degree_distribution(adj_matrix: np.ndarray) -> dict[int, float]:
@@ -13,7 +14,7 @@ class Stats:
         A = (adj_matrix != 0).astype(int)
 
         out_degree = A.sum(axis=1)
-        in_degree  = A.sum(axis=0)
+        in_degree = A.sum(axis=0)
 
         total_degree = in_degree + out_degree
 
@@ -23,11 +24,20 @@ class Stats:
         max_deg = int(total_degree.max())
 
         counts = np.bincount(total_degree, minlength=max_deg + 1)
-        probs = counts / counts.sum()
 
-        dist = {k: float(probs[k]) for k in range(len(probs)) if counts[k] > 0}
+        # Exclude degree 0 nodes from distribution
+        counts_nonzero = counts.copy()
+        counts_nonzero[0] = 0
+        total_nonzero = counts_nonzero.sum()
 
-        assert sum(dist.values()) == 1, 'error: degree dist must sum to 1'
+        if total_nonzero == 0:
+            return {}
+
+        probs = counts_nonzero / total_nonzero
+
+        dist = {k: float(probs[k]) for k in range(1, len(probs)) if counts[k] > 0}
+
+        assert abs(sum(dist.values()) - 1.0) < 1e-9, "error: degree dist must sum to 1"
 
         return dist
 
@@ -80,7 +90,7 @@ class Stats:
 
         intuition: how wide the musical pitch is of a piece
         """
-        
+
         A = (adj_matrix != 0).astype(int)
         U = ((A + A.T) > 0).astype(int)
         np.fill_diagonal(U, 0)
@@ -121,41 +131,41 @@ class Stats:
 
         giant_nodes = max(nx.connected_components(Gu), key=len)
         return int(len(giant_nodes))
-    
+
     @staticmethod
     def print_statistics(adj_matrix: np.ndarray) -> None:
         """
-        Cleanly prints all stats from a given numpy array 
+        Cleanly prints all stats from a given numpy array
         """
         width = 40
-        print(f"\n{'='*width}")
+        print(f"\n{'=' * width}")
         print(f"{'Degree Distribution'.center(width)}")
-        print(f"{'='*width}")
+        print(f"{'=' * width}")
         deg_dist = Stats.find_degree_distribution(adj_matrix)
         for deg, dist in deg_dist.items():
             print(f"Degree {deg} → Frequency: {dist:.3f}")
 
-        print(f"\n{'='*width}")
+        print(f"\n{'=' * width}")
         print(f"{'Clustering Coefficients'.center(width)}")
-        print(f"{'='*width}")
+        print(f"{'=' * width}")
         clust_coeff = Stats.find_clustering_coefficient(adj_matrix)
         for node, coeff in clust_coeff.items():
             print(f"Node {node} → {coeff:.3f}")
 
-        print(f"\n{'='*width}")
+        print(f"\n{'=' * width}")
         print(f"{'Average Clustering'.center(width)}")
-        print(f"{'='*width}")
+        print(f"{'=' * width}")
         avg_clust = Stats.find_average_clustering(adj_matrix)
         print(f"Average Clustering: {avg_clust:.3f}")
 
-        print(f"\n{'='*width}")
+        print(f"\n{'=' * width}")
         print(f"{'Diameter'.center(width)}")
-        print(f"{'='*width}")
+        print(f"{'=' * width}")
         diam = Stats.find_diameter(adj_matrix)
         print(f"Diameter: {diam}")
 
-        print(f"\n{'='*width}")
+        print(f"\n{'=' * width}")
         print(f"{'Giant Component Size'.center(width)}")
-        print(f"{'='*width}")
+        print(f"{'=' * width}")
         giant_comp_size = Stats.find_giant_component_size(adj_matrix)
         print(f"Giant Component Size: {giant_comp_size}")
