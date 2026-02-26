@@ -28,7 +28,7 @@ def find_degree_distribution(adj_matrix: np.ndarray) -> dict[int, float]:
     dist = {k: float(probs[k]) for k in range(len(probs)) if counts[k] > 0}
 
     # sanity check print if all items sum to 1
-    print(f'{sum(dist.values())=}')
+    assert sum(dist.values()) == 1, 'error: degree dist must sum to 1'
 
     return dist
 
@@ -119,9 +119,45 @@ def find_giant_component_size(adj_matrix: np.ndarray) -> int:
     giant_nodes = max(nx.connected_components(Gu), key=len)
     return int(len(giant_nodes))
 
+def print_statistics(adj_matrix: np.ndarray) -> None:
+    """
+    Cleanly prints all stats from a given numpy array 
+    """
+    print(f"\n{'='*40}")
+    print(f"Degree Distribution")
+    print(f"{'='*40}")
+    deg_dist = find_degree_distribution(adj_matrix)
+    for deg, dist in deg_dist.items():
+        print(f"Degree: {deg}, Frequency: {dist:.3f}")
+
+    print(f"\n{'='*40}")
+    print(f"Clustering Coefficients")
+    print(f"{'='*40}")
+    clust_coeff = find_clustering_coefficient(adj_matrix)
+    for node, coeff in clust_coeff.items():
+        print(f"Node: {node}, Clustering Coefficient: {coeff:.3f}")
+
+    print(f"\n{'='*40}")
+    print(f"Average Clustering")
+    print(f"{'='*40}")
+    avg_clust = find_average_clustering(adj_matrix)
+    print(f"Average Clustering: {avg_clust}")
+
+    print(f"\n{'='*40}")
+    print(f"Diameter")
+    print(f"{'='*40}")
+    diam = find_diameter(adj_matrix)
+    print(f"Diameter: {diam}")
+
+    print(f"\n{'='*40}")
+    print(f"Giant Component Size")
+    print(f"{'='*40}")
+    giant_comp_size = find_giant_component_size(adj_matrix)
+    print(f"Giant Component Size: {giant_comp_size}")
+
 if __name__ == "__main__":
     mat=random_adjacency_graph()
-    pprint(find_degree_distribution(mat))
-    pprint(find_clustering_coefficient(mat))
-    print(find_diameter(mat))
-    print(find_giant_component_size(mat))
+    print_statistics(mat)
+    # pprint(find_clustering_coefficient(mat))
+    # print(find_diameter(mat))
+    # print(find_giant_component_size(mat))
