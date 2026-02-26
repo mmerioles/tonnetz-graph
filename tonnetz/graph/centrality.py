@@ -1,6 +1,5 @@
 import numpy as np
 import networkx as nx
-from .builder import random_adjacency_graph
 
 
 def find_betweenness_centrality(adj_matrix: np.ndarray) -> dict[str, float]:
@@ -71,23 +70,10 @@ def find_degree_centrality(adj_matrix: np.ndarray) -> dict[int, float]:
     return {int(node): score for node, score in scores.items()}
 
 
-def _print_top(label: str, scores: dict, top_n: int = 10) -> None:
+def print_top(label: str, scores: dict, top_n: int = 10) -> None:
     ranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[:top_n]
     print(f"\n{'='*40}")
     print(f"  {label} — Top {top_n} Nodes")
     print(f"{'='*40}")
     for rank, (node, score) in enumerate(ranked, start=1):
         print(f"  {rank:>2}. Node {str(node):>3}  →  {score:.6f}")
-
-
-if __name__ == "__main__":
-    from tonnetz.graph.builder import random_adjacency_graph
-
-    np.random.seed(42)
-    adj = random_adjacency_graph()
-
-    print("\nComputing centralities on a 48-node Tonnetz graph...")
-
-    _print_top("Degree (in-degree) Centrality", find_degree_centrality(adj))
-    _print_top("Betweenness Centrality",        find_betweenness_centrality(adj))
-    _print_top("Eigenvector Centrality",        find_eigenvector_centrality(adj))

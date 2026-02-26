@@ -9,8 +9,8 @@
 1. **Week 1 Goals - Monophonic Tonnetz Graph**
    - [ ] Parse midi, and build adjacency matrix
    - [x] Given adjacency matrix, make visualization of graph
-   - [x] Given adjacency matrix, find centrality, betweenness, eigenvector, etc
-   - [x] Given adjacency matrix, find degree distribution, clustering coefficient, etc
+   - [x] Given adjacency matrix, find centralities: degree, betweenness, eigenvector
+   - [x] Given adjacency matrix, find statistics: degree distributions, clustering coefficient, diameter, giant component
 
 2. **Week 2 Goals - TBD**
 
@@ -36,12 +36,13 @@ uv sync
 ## Usage
 To run a test, please run your desired scripts using uv
 ```bash
-uv run tests/test_centrality.py
-uv run tests/test_statistics.py # Debug print out all the statistics
+uv run tests/test_centrality.py # Debug print out centralities
+uv run tests/test_statistics.py # Debug print out statistics
+uv run tests/test_plot.py # Debug print graph
 ```
 To smoke check against pytest, simply run the following
 ```bash
-pytest
+uv run pytest
 ```
 
 ## Team Members
