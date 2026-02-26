@@ -1,5 +1,6 @@
 import numpy as np
 import networkx as nx
+from tonnetz.util.util import create_note_labels
 
 
 class Stats:
@@ -149,8 +150,9 @@ class Stats:
         print(f"{'Clustering Coefficients'.center(width)}")
         print(f"{'=' * width}")
         clust_coeff = Stats.find_clustering_coefficient(adj_matrix)
+        labels = create_note_labels()
         for node, coeff in clust_coeff.items():
-            print(f"Node {node} → {coeff:.3f}")
+            print(f"Node {node} ({labels[node]}) → {coeff:.3f}")
 
         print(f"\n{'=' * width}")
         print(f"{'Average Clustering'.center(width)}")

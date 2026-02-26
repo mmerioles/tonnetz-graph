@@ -1,6 +1,7 @@
 import pytest
 from tonnetz.graph.builder import build_random_adjacency_matrix, build_graph
 from tonnetz.viz.plot import plot_graph
+from tonnetz.graph.centrality import get_centralities
 
 @pytest.fixture
 def random_adj():
@@ -12,5 +13,6 @@ def test_compile(random_adj):
 
 if __name__ == "__main__":
     random_adj = build_random_adjacency_matrix()
+    ctr = get_centralities(random_adj)
     G = build_graph(random_adj)
-    plot_graph(G)
+    plot_graph(G, show_isolated_nodes=False, name="Random Graph", centralities=ctr)
