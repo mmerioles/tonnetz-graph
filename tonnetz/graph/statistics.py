@@ -123,35 +123,36 @@ def print_statistics(adj_matrix: np.ndarray) -> None:
     """
     Cleanly prints all stats from a given numpy array 
     """
-    print(f"\n{'='*40}")
-    print(f"Degree Distribution")
-    print(f"{'='*40}")
+    width = 40
+    print(f"\n{'='*width}")
+    print(f"{'Degree Distribution'.center(width)}")
+    print(f"{'='*width}")
     deg_dist = find_degree_distribution(adj_matrix)
     for deg, dist in deg_dist.items():
-        print(f"Degree: {deg}, Frequency: {dist:.3f}")
+        print(f"Degree {deg} → Frequency: {dist:.3f}")
 
-    print(f"\n{'='*40}")
-    print(f"Clustering Coefficients")
-    print(f"{'='*40}")
+    print(f"\n{'='*width}")
+    print(f"{'Clustering Coefficients'.center(width)}")
+    print(f"{'='*width}")
     clust_coeff = find_clustering_coefficient(adj_matrix)
     for node, coeff in clust_coeff.items():
-        print(f"Node: {node}, Clustering Coefficient: {coeff:.3f}")
+        print(f"Node {node} → {coeff:.3f}")
 
-    print(f"\n{'='*40}")
-    print(f"Average Clustering")
-    print(f"{'='*40}")
+    print(f"\n{'='*width}")
+    print(f"{'Average Clustering'.center(width)}")
+    print(f"{'='*width}")
     avg_clust = find_average_clustering(adj_matrix)
-    print(f"Average Clustering: {avg_clust}")
+    print(f"Average Clustering: {avg_clust:.3f}")
 
-    print(f"\n{'='*40}")
-    print(f"Diameter")
-    print(f"{'='*40}")
+    print(f"\n{'='*width}")
+    print(f"{'Diameter'.center(width)}")
+    print(f"{'='*width}")
     diam = find_diameter(adj_matrix)
     print(f"Diameter: {diam}")
 
-    print(f"\n{'='*40}")
-    print(f"Giant Component Size")
-    print(f"{'='*40}")
+    print(f"\n{'='*width}")
+    print(f"{'Giant Component Size'.center(width)}")
+    print(f"{'='*width}")
     giant_comp_size = find_giant_component_size(adj_matrix)
     print(f"Giant Component Size: {giant_comp_size}")
 
