@@ -1,6 +1,6 @@
 import numpy as np
 import networkx as nx
-
+from tonnetz.util.util import create_note_labels
 
 def find_betweenness_centrality(adj_matrix: np.ndarray) -> dict[str, float]:
     """
@@ -75,8 +75,9 @@ def print_top(label: str, scores: dict, top_n: int = 10) -> None:
     print(f"\n{'='*40}")
     print(f"  {label} — Top {top_n} Nodes")
     print(f"{'='*40}")
+    labels = create_note_labels()
     for rank, (node, score) in enumerate(ranked, start=1):
-        print(f"  {rank:>2}. Node {str(node):>3}  →  {score:.6f}")
+        print(f"  {rank:>2}. Node {str(node):>3} ({labels[int(node)]})  →  {score:.6f}")
 
 def print_centralities(adj_matrix: np.ndarray) -> None:
     print("\nComputing centralities on a 48-node Tonnetz graph...")
@@ -84,3 +85,12 @@ def print_centralities(adj_matrix: np.ndarray) -> None:
     print_top("Degree (in-degree) Centrality", find_degree_centrality(adj_matrix))
     print_top("Betweenness Centrality",        find_betweenness_centrality(adj_matrix))
     print_top("Eigenvector Centrality",        find_eigenvector_centrality(adj_matrix))
+
+def get_centralities(adj_matrix: np.ndarray) -> dict:
+    btw_ctr = find_betweenness_centrality(adj_matrix)
+    eig_ctr = find_eigenvector_centrality(adj_matrix)
+    deg_ctr = find_degree_centrality(adj_matrix)
+
+    return {'btw': btw_ctr, 
+            'eig': eig_ctr,
+            'deg': deg_ctr}
