@@ -1,7 +1,5 @@
 import numpy as np
-from .builder import random_adjacency_graph
 import networkx as nx
-from pprint import pprint
 
 def find_degree_distribution(adj_matrix: np.ndarray) -> dict[int, float]:
     """
@@ -27,7 +25,6 @@ def find_degree_distribution(adj_matrix: np.ndarray) -> dict[int, float]:
 
     dist = {k: float(probs[k]) for k in range(len(probs)) if counts[k] > 0}
 
-    # sanity check print if all items sum to 1
     assert sum(dist.values()) == 1, 'error: degree dist must sum to 1'
 
     return dist
@@ -155,10 +152,3 @@ def print_statistics(adj_matrix: np.ndarray) -> None:
     print(f"{'='*width}")
     giant_comp_size = find_giant_component_size(adj_matrix)
     print(f"Giant Component Size: {giant_comp_size}")
-
-if __name__ == "__main__":
-    mat=random_adjacency_graph()
-    print_statistics(mat)
-    # pprint(find_clustering_coefficient(mat))
-    # print(find_diameter(mat))
-    # print(find_giant_component_size(mat))
