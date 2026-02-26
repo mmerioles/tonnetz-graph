@@ -8,9 +8,12 @@
 
 1. **Week 1 Goals - Monophonic Tonnetz Graph**
    - [ ] Parse midi, and build adjacency matrix
-   - [ ] Given adjacency matrix, make visualization of graph
-   - [ ] given adjacency matrix, find centrality, betweenness, eigenvector, etc
-   - [ ] Given adjacency matrix, find degree distribution, clustering coefficient, etc
+   - [x] Given adjacency matrix, make visualization of graph
+   - [x] Given adjacency matrix, find centrality, betweenness, eigenvector, etc
+   - [x] Given adjacency matrix, find degree distribution, clustering coefficient, etc
+
+2. **Week 2 Goals - TBD**
+
 
 ## Installation
 First, clone the repository via
@@ -34,6 +37,11 @@ uv sync
 To run a test, please run your desired scripts using uv
 ```bash
 uv run tests/test_centrality.py
+uv run tests/test_statistics.py # Debug print out all the statistics
+```
+To smoke check against pytest, simply run the following
+```bash
+pytest
 ```
 
 ## Team Members
