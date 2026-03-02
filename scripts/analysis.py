@@ -7,6 +7,7 @@ from tonnetz.graph.centrality import print_centralities
 from tonnetz.graph.centrality import get_centralities
 
 filename = "My_Heart_Will_Go_On.mid"
+# filename = "beethooven-3rd-movement.mid"
 channel_number = 0
 
 # Get the project root directory (parent of the scripts directory)
@@ -22,11 +23,11 @@ plot_graph(G, show_isolated_nodes=False, name=filename, centralities=ctr)
 
 
 # Compute and print statistics
-Stats.print_statistics(transition_matrix)
-print_centralities(transition_matrix)
+# Stats.print_statistics(transition_matrix)
+# print_centralities(transition_matrix)
 
 # Plot Degree Distribution Histogram
-degree_distribution = Stats.find_degree_distribution(transition_matrix)
-plot_degree_distribution(degree_distribution)
+# degree_distribution = Stats.find_degree_distribution(transition_matrix)
+# plot_degree_distribution(degree_distribution)
 
 # TODO: Visualisation: display info about MIDI file, statistics

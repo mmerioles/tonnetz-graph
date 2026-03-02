@@ -95,3 +95,51 @@ def gen_transition_poly(midi_file: str, target_channel=1) -> np.ndarray:
     transition_matrix[transition_matrix < threshold] = 0
 
     return transition_matrix
+
+def extract_timed_events(midi_file: str, target_channel: int = 1, bpm: float = 120.0) -> list[dict]:
+    """
+    Returns a flat list of {time_sec, note_idx, event_type} dicts,
+    sorted by absolute time in seconds, with CORRECT tempo conversion.
+    """
+    mid = mido.MidiFile(midi_file)
+    ticks_per_beat = mid.ticks_per_beat
+    current_tempo = 500_000  # 120 BPM default in microseconds
+
+    min_note, num_notes = 36, 48
+    events = []
+    abs_time_sec = 0.0
+
+    # First pass: collect all messages with proper absolute timing
+    for msg in mido.merge_tracks(mid.tracks):
+        # Convert delta ticks to seconds using current tempo
+        if msg.time:
+            abs_time_sec += mido.tick2second(msg.time, ticks_per_beat, current_tempo)
+
+        # Track tempo changes
+        if msg.type == "set_tempo":
+            current_tempo = msg.tempo
+            continue
+
+        # Filter by channel
+        if not (hasattr(msg, "channel") and msg.channel == target_channel):
+            continue
+
+        note = getattr(msg, "note", None)
+        if note is None or not (min_note <= note < min_note + num_notes):
+            continue
+
+        note_idx = note - min_note
+        vel = getattr(msg, "velocity", 64)
+
+        if msg.type == "note_on" and vel > 0:
+            events.append({"time": abs_time_sec, "note": note_idx, "note_num": note, "type": "on", "velocity": vel})
+        elif msg.type == "note_off" or (msg.type == "note_on" and vel == 0):
+            events.append({"time": abs_time_sec, "note": note_idx, "note_num": note, "type": "off", "velocity": vel})
+
+    # Apply BPM override if needed
+    if bpm != 120.0:
+        scale = 120.0 / bpm  # scale times
+        for event in events:
+            event["time"] *= scale
+
+    return sorted(events, key=lambda e: e["time"])

@@ -32,6 +32,7 @@ While in the project directory, run the following to sync your environment with 
 ```bash
 uv sync
 ```
+For audio playback features, you need to install FluidSynth: https://www.fluidsynth.org/
 
 ## Usage
 To run a test, please run your desired scripts using uv
