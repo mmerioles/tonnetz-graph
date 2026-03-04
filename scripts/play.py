@@ -19,6 +19,12 @@ def main() -> None:
         default=None,
         help="Override tempo (BPM). If omitted, use the original tempo.",
     )
+    parser.add_argument(
+        "--channel",
+        type=int,
+        default=None,
+        help="If set (0-15), only play this MIDI channel. Default plays all channels.",
+    )
     args = parser.parse_args()
 
     script_dir = Path(__file__).resolve().parent

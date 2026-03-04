@@ -144,7 +144,7 @@ class FluidSynthPlayer:
             self.fs.delete()
             raise RuntimeError(f"Failed to load soundfont '{soundfont_path}': {e}")
 
-        # Select acoustic grand piano on channel 0
+        # Default acoustic grand piano on channel 0.
         self.fs.program_select(0, self.sfid, 0, 0)
         self._active_notes = set()
 
@@ -157,21 +157,38 @@ class FluidSynthPlayer:
         else:
             return "pulseaudio"  # PulseAudio on Linux (fallback: alsa)
 
-    def note_on(self, midi_note: int, velocity: int):
+    def setup_channel(
+        self,
+        channel: int,
+        bank: int = 0,
+        preset: int = 0,
+        volume: int | None = None,
+        pan: int | None = None,
+    ):
+        """Configure instrument and mixer controls for a channel."""
+        if not (0 <= channel <= 15):
+            return
+        self.fs.program_select(channel, self.sfid, int(bank), int(preset))
+        if volume is not None:
+            self.fs.cc(channel, 7, int(max(0, min(127, volume))))
+        if pan is not None:
+            self.fs.cc(channel, 10, int(max(0, min(127, pan))))
+
+    def note_on(self, midi_note: int, velocity: int, channel: int = 0):
         """Start playing a note."""
         # Allow the full MIDI range for audio; visualization code is responsible
         # for mapping/limiting to the Tonnetz node range.
-        if not (0 <= midi_note <= 127):
+        if not (0 <= midi_note <= 127 and 0 <= channel <= 15):
             return
-        self.fs.noteon(0, midi_note, int(velocity))
-        self._active_notes.add(midi_note)
+        self.fs.noteon(channel, midi_note, int(velocity))
+        self._active_notes.add((channel, midi_note))
 
-    def note_off(self, midi_note: int):
+    def note_off(self, midi_note: int, channel: int = 0):
         """Stop playing a note."""
-        if not (0 <= midi_note <= 127):
+        if not (0 <= midi_note <= 127 and 0 <= channel <= 15):
             return
-        self.fs.noteoff(0, midi_note)
-        self._active_notes.discard(midi_note)
+        self.fs.noteoff(channel, midi_note)
+        self._active_notes.discard((channel, midi_note))
 
     def flush(self):
         """Flush audio buffer to prevent crackling and ensure notes are played."""
@@ -184,8 +201,8 @@ class FluidSynthPlayer:
     def all_notes_off(self):
         """Stop all currently playing notes."""
         notes_copy = list(self._active_notes)
-        for note in notes_copy:
-            self.note_off(note)
+        for channel, note in notes_copy:
+            self.note_off(note, channel=channel)
         self.flush()
 
     def close(self):

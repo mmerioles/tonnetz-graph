@@ -6,7 +6,8 @@ from tonnetz.graph.statistics import Stats
 from tonnetz.graph.centrality import print_centralities
 from tonnetz.graph.centrality import get_centralities
 
-filename = "My_Heart_Will_Go_On_combined.mid"
+filename = "My_Heart_Will_Go_On.mid"
+overlay_filename = "My_Heart_Will_Go_On_combined.mid"
 # filename = "beethooven-3rd-movement.mid"
 channel_number = 0
 
@@ -19,7 +20,13 @@ transition_matrix = gen_transition_poly(midi_file, channel_number)
 # Build the graph and plot it
 G = build_graph(transition_matrix)
 ctr = get_centralities(transition_matrix)
-plot_graph(G, show_isolated_nodes=False, name=filename, centralities=ctr)
+plot_graph(
+    G,
+    show_isolated_nodes=False,
+    name=filename,
+    centralities=ctr,
+    overlay_midi_name=overlay_filename,
+)
 
 
 # Compute and print statistics
