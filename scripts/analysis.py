@@ -5,7 +5,7 @@ from tonnetz.viz.plot import plot_graph, plot_degree_distribution
 from tonnetz.graph.statistics import Stats
 from tonnetz.graph.centrality import print_centralities
 from tonnetz.graph.centrality import get_centralities
-from tonnetz.gen.walk import biased_random_walk
+from tonnetz.gen.walk import biased_random_walk, purely_random_sequence
 from tonnetz.gen.create_midi import create_midi_from_list
 
 filename = "My_Heart_Will_Go_On.mid"
@@ -43,6 +43,24 @@ for mode, seed in (("degree", 11), ("betweenness", 29), ("eigenvector", 47)):
         note_length_beats=0.5,
     )
     melody_outputs[out_name] = out_name
+
+# Also add a purely random baseline melody (0..47 with rests=-1).
+random_seq = purely_random_sequence(
+    length=96,
+    rest_prob=0.25,
+    seed=101,
+    num_notes=48,
+)
+random_name = "rw_melody_random.mid"
+create_midi_from_list(
+    random_seq,
+    output_path=os.path.join(raw_midi_dir, random_name),
+    bpm=88.0,
+    channel=0,
+    velocity=92,
+    note_length_beats=0.5,
+)
+melody_outputs[random_name] = random_name
 
 # Build the graph and plot it
 G = build_graph(transition_matrix)

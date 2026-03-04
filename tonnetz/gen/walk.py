@@ -11,6 +11,7 @@ REST = -1
 REST_PROB = 0.3
 WALK_PROB = 0.7
 SEQUENCE_LENGTH = 30
+NUM_NOTES = 48
 
 
 def biased_random_walk(
@@ -99,6 +100,33 @@ def biased_random_walk(
         sequence.append(current)
 
     return sequence
+
+
+def purely_random_sequence(
+    length: int = SEQUENCE_LENGTH,
+    rest_prob: float = REST_PROB,
+    seed: int | None = None,
+    num_notes: int = NUM_NOTES,
+) -> list[int]:
+    """
+    Generate a sequence by uniform random sampling over note indices
+    [0, num_notes-1], with rests (-1) occurring with probability rest_prob.
+    """
+    if length < 0:
+        raise ValueError("length must be >= 0")
+    if not (0.0 <= rest_prob <= 1.0):
+        raise ValueError("rest_prob must be in [0, 1]")
+    if num_notes <= 0:
+        raise ValueError("num_notes must be > 0")
+
+    rng = np.random.default_rng(seed)
+    out: list[int] = []
+    for _ in range(length):
+        if rng.random() < rest_prob:
+            out.append(REST)
+        else:
+            out.append(int(rng.integers(0, num_notes)))
+    return out
 
 
 def print_sequence(sequence: list[int]) -> None:
