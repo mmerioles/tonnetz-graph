@@ -120,7 +120,14 @@ def create_midi_from_list(
     return output
 
 
-def _step_ticks(base_ticks: float,
-                jitter: float,) -> int:
+def _step_ticks(
+    base_ticks: float,
+    rng: random.Random | None,
+    jitter: float,
+) -> int:
     """Return integer step length in ticks, optionally jittered."""
-    return max(1, int(round(base_ticks)))
+    if rng is None:
+        return max(1, int(round(base_ticks)))
+
+    scale = rng.uniform(1.0 - jitter, 1.0 + jitter)
+    return max(1, int(round(base_ticks * scale)))

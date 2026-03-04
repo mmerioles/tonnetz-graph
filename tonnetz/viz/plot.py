@@ -261,7 +261,8 @@ def plot_graph(
     show: bool = True,
     name: str = "Network Graph",
     centralities: dict | None = None,
-    overlay_midi_name: str | None = None,
+    overlay_chord_midi_name: str | None = None,
+    overlay_melody_options: dict[str, str] | None = None,
 ):
     G = input_graph.copy()
 
@@ -331,25 +332,34 @@ def plot_graph(
     overlay = None
 
     if _AUDIO_AVAILABLE:
-        midi_path = overlay_midi_name or name
-        if not os.path.isabs(midi_path):
-            candidate = _MIDI_DIR / name
-            if overlay_midi_name:
-                candidate = _MIDI_DIR / overlay_midi_name
+        chord_midi_path = overlay_chord_midi_name or name
+        if not os.path.isabs(chord_midi_path):
+            candidate = _MIDI_DIR / chord_midi_path
             if candidate.exists():
-                midi_path = str(candidate)
+                chord_midi_path = str(candidate)
+
+        resolved_melody_options: dict[str, str] = {}
+        if overlay_melody_options:
+            for label, path_like in overlay_melody_options.items():
+                path = path_like
+                if not os.path.isabs(path):
+                    candidate = _MIDI_DIR / path
+                    if candidate.exists():
+                        path = str(candidate)
+                resolved_melody_options[label] = path
 
         soundfont_path = str(_DEFAULT_SOUNDFONT) if _DEFAULT_SOUNDFONT.exists() else None
 
-        if os.path.exists(midi_path):
+        if os.path.exists(chord_midi_path):
             overlay = TonnetzRealtimeOverlay(
                 fig=fig,
                 ax=ax,
                 node_artist=node_artist,
                 nodes_in_graph=list(G.nodes()),
                 node_pos=node_pos,
-                midi_path=midi_path,
+                chord_midi_path=chord_midi_path,
                 soundfont_path=soundfont_path,
+                melody_midi_options=resolved_melody_options,
                 melody_track=0,
                 chord_track=1,
             )
@@ -454,8 +464,9 @@ class TonnetzRealtimeOverlay:
         node_artist,
         nodes_in_graph: list[int],
         node_pos: dict[int, np.ndarray],
-        midi_path: str,
+        chord_midi_path: str,
         soundfont_path: str | None = None,
+        melody_midi_options: dict[str, str] | None = None,
         melody_track: int = 0,
         chord_track: int = 1,
     ):
@@ -469,8 +480,7 @@ class TonnetzRealtimeOverlay:
         self.node_pos = node_pos
         self.xy = np.array([self.node_pos[n] for n in self.nodes], dtype=float)
 
-        self.fig.canvas.draw()
-        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+        self.background = None
         self.fig.canvas.mpl_connect("draw_event", self._on_draw)
 
         sizes = np.array(self.node_artist.get_sizes(), dtype=float)
@@ -502,15 +512,22 @@ class TonnetzRealtimeOverlay:
         self.active_melody_note_counts: dict[int, int] = {}
         self.active_chord_note_counts: dict[int, int] = {}
 
-        self.melody_events0 = _events_for_tracks(midi_path, [melody_track])
-        self.chord_events0 = _events_for_tracks(midi_path, [chord_track])
+        self.melody_track = melody_track
+        self.chord_track = chord_track
+        self.chord_midi_path = chord_midi_path
+        self.melody_midi_options = melody_midi_options or {}
+        self.melody_labels = list(self.melody_midi_options.keys())
+        self.selected_melody_label = self.melody_labels[0] if self.melody_labels else None
+
+        self.chord_events0 = _events_for_tracks(self.chord_midi_path, [self.chord_track])
+        self.melody_events0 = self._load_selected_melody_events()
         self.events0: list[tuple[float, str, MidiEvent]] = [
             (e.t, "melody", e) for e in self.melody_events0
         ] + [
             (e.t, "chords", e) for e in self.chord_events0
         ]
         self.events0.sort(key=lambda x: x[0])
-        self.base_bpm = float(get_initial_bpm(midi_path))
+        self.base_bpm = float(get_initial_bpm(self.chord_midi_path))
         self.events: list[tuple[float, str, MidiEvent]] = self.events0[:]
 
         self.audio = None
@@ -529,6 +546,17 @@ class TonnetzRealtimeOverlay:
 
         ax_bpm = fig.add_axes([0.70, 0.92, 0.13, 0.06])
         self.bpm_box = TextBox(ax_bpm, "BPM", initial=f"{self.base_bpm:.2f}")
+        self.melody_radio = None
+        if self.melody_labels:
+            # Keep selector comfortably inside figure bounds with enough room
+            # for filename-style labels.
+            rax_melody = fig.add_axes([0.72, 0.62, 0.26, 0.28])
+            self.melody_radio = RadioButtons(rax_melody, tuple(self.melody_labels), active=0)
+            rax_melody.set_title("Melody", fontsize=10)
+            for lbl in self.melody_radio.labels:
+                lbl.set_fontsize(8)
+                lbl.set_clip_on(True)
+            self.melody_radio.on_clicked(self._on_change_melody)
 
         self.btn.on_clicked(self._toggle_play)
 
@@ -541,6 +569,35 @@ class TonnetzRealtimeOverlay:
         self._playback_thread: threading.Thread | None = None
         self._playback_done = False
         self._dirty_visual = False
+
+        # Force an initial full render after controls are created so widget
+        # axes are visible immediately (not only after a resize redraw).
+        self.fig.canvas.draw()
+        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+
+    def _load_selected_melody_events(self) -> list[MidiEvent]:
+        if not self.selected_melody_label:
+            return []
+        path = self.melody_midi_options.get(self.selected_melody_label)
+        if not path or not os.path.exists(path):
+            return []
+        return _events_for_tracks(path, [self.melody_track])
+
+    def _rebuild_events_for_selection(self):
+        self.melody_events0 = self._load_selected_melody_events()
+        self.events0 = [(e.t, "melody", e) for e in self.melody_events0] + [
+            (e.t, "chords", e) for e in self.chord_events0
+        ]
+        self.events0.sort(key=lambda x: x[0])
+        self.events = self.events0[:]
+
+    def _on_change_melody(self, label: str):
+        self.selected_melody_label = label
+        was_playing = self.is_playing
+        self.stop()
+        self._rebuild_events_for_selection()
+        if was_playing:
+            self.start()
 
     def _toggle_play(self, _event):
         if not self.is_playing:
@@ -765,14 +822,9 @@ class TonnetzRealtimeOverlay:
         if now - self._last_draw >= 1.0 / 60.0:
             self._last_draw = now
             canvas = self.fig.canvas
-            if getattr(self, "background", None) is not None:
-                canvas.restore_region(self.background)
-                self.ax.draw_artist(self.chord_artist)
-                self.ax.draw_artist(self.melody_artist)
-                canvas.blit(self.ax.bbox)
-                canvas.flush_events()
-            else:
-                canvas.draw_idle()
+            # Use full redraw to keep widget controls stable and visible
+            # during resize/interactions across backends.
+            canvas.draw_idle()
 
     def _on_draw(self, event):
         if event.canvas is self.fig.canvas:
