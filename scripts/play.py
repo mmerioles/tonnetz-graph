@@ -1,35 +1,17 @@
-"""
-Convenience CLI script to test MIDI playback using the shared FluidSynth
-pipeline used by the Tonnetz visualization.
-
-Examples (run from repo root):
-    uv run python -m scripts.play
-    uv run python -m scripts.play --midi beethooven-3rd-movement.mid
-    uv run python -m scripts.play --midi path/to/file.mid --bpm 90
-"""
-
-from __future__ import annotations
-
 import argparse
 import os
 from pathlib import Path
-
 from tonnetz.midi.player import play_midi_file
 
+DEFAULT_FILE="My_Heart_Will_Go_On_combined.mid"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Play a MIDI file with FluidSynth.")
     parser.add_argument(
         "--midi",
         type=str,
-        default="beethooven-3rd-movement.mid",
+        default=DEFAULT_FILE,
         help="MIDI filename (looked up in raw_midi/) or absolute path.",
-    )
-    parser.add_argument(
-        "--channel",
-        type=int,
-        default=None,
-        help="MIDI channel to play (0–15). Omit to use all non-drum channels.",
     )
     parser.add_argument(
         "--bpm",

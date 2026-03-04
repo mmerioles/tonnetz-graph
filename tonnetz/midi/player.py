@@ -12,13 +12,6 @@ MAX_NOTE = 83  # inclusive
 
 @dataclass(frozen=True)
 class MidiEvent:
-    """Represents a single MIDI note event.
-
-    The time coordinate `t` is stored in SECONDS relative to the start
-    of the piece, taking into account all tempo changes in the MIDI
-    file. This is the natural timeline for both audio playback and GUI
-    highlighting.
-    """
     t: float       # seconds since start
     kind: str      # "on" or "off"
     note: int      # MIDI note number (0..127)
@@ -26,12 +19,10 @@ class MidiEvent:
 
 
 def _is_windows() -> bool:
-    """Check if running on Windows."""
     return sys.platform.startswith("win")
 
 
 def _is_macos() -> bool:
-    """Check if running on macOS."""
     return sys.platform.startswith("darwin")
 
 
@@ -63,10 +54,8 @@ def midi_to_events_ticks(
     midi_file:
         Path to the MIDI file.
     target_channel:
-        If an integer (0–15), only events from that channel are used.
-        If None, events from all non‑drum channels are used.
-    exclude_drums:
-        When True, channel 9 (GM drums) is always ignored.
+        If an integer (0-15), only events from that channel are used.
+        If None, events from all non-drum channels are used.
     """
     mid = mido.MidiFile(midi_file)
     ticks_per_beat = mid.ticks_per_beat
@@ -76,36 +65,25 @@ def midi_to_events_ticks(
     abs_sec = 0.0
 
     for msg in mido.merge_tracks(mid.tracks):
-        # Convert delta ticks to seconds using CURRENT tempo
         if msg.time:
             abs_sec += mido.tick2second(msg.time, ticks_per_beat, tempo)
 
-        # Track tempo changes immediately
         if msg.type == "set_tempo":
             tempo = msg.tempo
             continue
 
-        # Ignore messages without a channel (meta, sysex, etc.)
         channel = getattr(msg, "channel", None)
         if channel is None:
             continue
 
-        # Optionally drop GM drum channel
-        if exclude_drums and channel == 9:
-            continue
-
-        # Filter by specific channel if requested
         if target_channel is not None and channel != target_channel:
             continue
 
-        # Process note events – keep the full MIDI register (0–127) for audio,
-        # and let visualization code decide which subset to highlight.
         if msg.type == "note_on" and msg.velocity > 0:
             events.append(MidiEvent(abs_sec, "on", msg.note, int(msg.velocity)))
         elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
             # Preserve note_off events without velocity (velocity 0 is semantically correct)
             events.append(MidiEvent(abs_sec, "off", msg.note, 0))
-
     return events
 
 
@@ -300,9 +278,3 @@ def play_midi_file(
     finally:
         player.close()
         print("Playback complete.")
-
-
-if __name__ == "__main__":
-    # Example usage:
-    # play_midi_file("song.mid", "GeneralUser.sf2", target_channel=0)
-    pass

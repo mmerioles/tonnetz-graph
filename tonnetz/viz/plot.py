@@ -6,9 +6,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RadioButtons, Button, TextBox
-
-from matplotlib.widgets import RadioButtons, Button, TextBox
-
 try:
     from tonnetz.midi.player import (
         midi_to_events_ticks,
@@ -18,13 +15,13 @@ try:
         scale_events_bpm,
     )
     _AUDIO_AVAILABLE = True
-except ImportError as _e:  # mido/fluidsynth/tonnetz.midi.player missing
+except ImportError as _e:  
     _AUDIO_AVAILABLE = False
     _AUDIO_IMPORT_ERROR = _e
 from tonnetz.util.util import create_note_labels
 
 MIN_NOTE = 36
-MAX_NOTE = 83  # inclusive
+MAX_NOTE = 83
 
 _MODULE_DIR = Path(__file__).resolve().parent         
 _PROJECT_ROOT = _MODULE_DIR.parents[2]                 
@@ -241,6 +238,8 @@ class TonnetzRealtimeOverlay:
         self.xy = np.array([self.node_pos[n] for n in self.nodes], dtype=float)
 
         self.fig.canvas.draw()
+        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+        self.fig.canvas.mpl_connect("draw_event", self._on_draw)
 
         sizes = np.array(self.node_artist.get_sizes(), dtype=float)
         if sizes.size == 1 and len(self.nodes) > 1:
@@ -280,6 +279,7 @@ class TonnetzRealtimeOverlay:
 
         self.btn.on_clicked(self._toggle_play)
 
+        self._last_draw = 0.0
         self.timer = fig.canvas.new_timer(interval=5)
         self.timer.add_callback(self._on_tick)
 
@@ -352,7 +352,6 @@ class TonnetzRealtimeOverlay:
                     self.active_nodes.add(node)
                     changed = True
                 if self.audio:
-                    # Guard velocity
                     vel = int(e.vel) if getattr(e, "vel", None) is not None else 80
                     self.audio.note_on(e.note, vel)
             else:  # "off"
@@ -376,18 +375,28 @@ class TonnetzRealtimeOverlay:
         if not active:
             self.highlight_artist.set_offsets(np.empty((0, 2)))
             self.highlight_artist.set_sizes([])
-            self.fig.canvas.draw_idle()
-            return
+        else:
+            idxs = [self.node_to_i[n] for n in active]
+            offsets = self.xy[idxs]
+            sizes = self.base_sizes[idxs] * 1.10
+            self.highlight_artist.set_offsets(offsets)
+            self.highlight_artist.set_sizes(sizes)
 
-        idxs = [self.node_to_i[n] for n in active]
+        now = time.perf_counter()
+        if now - self._last_draw >= 1.0 / 60.0:
+            self._last_draw = now
+            canvas = self.fig.canvas
+            if getattr(self, "background", None) is not None:
+                canvas.restore_region(self.background)
+                self.ax.draw_artist(self.highlight_artist)
+                canvas.blit(self.ax.bbox)
+                canvas.flush_events()
+            else:
+                canvas.draw_idle()
 
-        offsets = self.xy[idxs]
-        # Slightly larger ring (does NOT change base node sizes)
-        sizes = self.base_sizes[idxs] * 1.10
-
-        self.highlight_artist.set_offsets(offsets)
-        self.highlight_artist.set_sizes(sizes)
-        self.fig.canvas.draw_idle()
+    def _on_draw(self, event):
+        if event.canvas is self.fig.canvas:
+            self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
 
     def close(self):
         if self.timer.callbacks:

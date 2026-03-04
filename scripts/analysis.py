@@ -6,7 +6,7 @@ from tonnetz.graph.statistics import Stats
 from tonnetz.graph.centrality import print_centralities
 from tonnetz.graph.centrality import get_centralities
 
-filename = "My_Heart_Will_Go_On.mid"
+filename = "My_Heart_Will_Go_On_combined.mid"
 # filename = "beethooven-3rd-movement.mid"
 channel_number = 0
 
