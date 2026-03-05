@@ -481,6 +481,9 @@ class TonnetzRealtimeOverlay:
         self.xy = np.array([self.node_pos[n] for n in self.nodes], dtype=float)
 
         self.background = None
+        self._full_bg = None
+        self._blit_ready = False
+        self._needs_full_redraw = False
         self.fig.canvas.mpl_connect("draw_event", self._on_draw)
 
         sizes = np.array(self.node_artist.get_sizes(), dtype=float)
@@ -496,6 +499,7 @@ class TonnetzRealtimeOverlay:
             edgecolors="red",
             linewidths=2.5,
             zorder=10,
+            animated=True,
         )
         self.chord_artist = ax.scatter(
             [],
@@ -505,6 +509,7 @@ class TonnetzRealtimeOverlay:
             edgecolors="limegreen",
             linewidths=2.2,
             zorder=9,
+            animated=True,
         )
 
         self.active_melody_nodes: set[int] = set()
@@ -561,7 +566,9 @@ class TonnetzRealtimeOverlay:
         self.btn.on_clicked(self._toggle_play)
 
         self._last_draw = 0.0
-        self.render_timer = fig.canvas.new_timer(interval=16)  # ~60 FPS visual updates
+        self.target_fps = self._detect_target_fps()
+        interval_ms = max(1000 // max(self.target_fps, 1), 1)
+        self.render_timer = fig.canvas.new_timer(interval=interval_ms)
         self.render_timer.add_callback(self._on_render_tick)
 
         self._state_lock = threading.Lock()
@@ -573,7 +580,15 @@ class TonnetzRealtimeOverlay:
         # Force an initial full render after controls are created so widget
         # axes are visible immediately (not only after a resize redraw).
         self.fig.canvas.draw()
-        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+
+    def _detect_target_fps(self) -> int:
+        raw = os.getenv("TONNETZ_OVERLAY_FPS", "").strip()
+        if raw and raw.isdigit():
+            val = int(raw)
+            if 5 <= val <= 120:
+                return val
+        # Lower default FPS for broader low-spec compatibility.
+        return 30
 
     def _load_selected_melody_events(self) -> list[MidiEvent]:
         if not self.selected_melody_label:
@@ -637,6 +652,7 @@ class TonnetzRealtimeOverlay:
             self.active_chord_note_counts.clear()
             self._dirty_visual = True
             self._playback_done = False
+            self._needs_full_redraw = True
         self._apply_highlight()
 
         self.btn.label.set_text("Stop")
@@ -681,6 +697,7 @@ class TonnetzRealtimeOverlay:
             self.active_chord_note_counts.clear()
             self._playback_done = False
             self._dirty_visual = True
+            self._needs_full_redraw = True
         self._apply_highlight()
 
     def _read_bpm(self) -> float | None:
@@ -796,6 +813,9 @@ class TonnetzRealtimeOverlay:
         with self._state_lock:
             melody_active = [n for n in self.active_melody_nodes if n in self.node_to_i]
             chord_active = [n for n in self.active_chord_nodes if n in self.node_to_i]
+            needs_full_redraw = self._needs_full_redraw
+            if needs_full_redraw:
+                self._needs_full_redraw = False
 
         if not melody_active:
             self.melody_artist.set_offsets(np.empty((0, 2)))
@@ -819,16 +839,28 @@ class TonnetzRealtimeOverlay:
             self.chord_artist.set_sizes(c_sizes)
 
         now = time.perf_counter()
-        if now - self._last_draw >= 1.0 / 60.0:
+        min_draw_dt = 1.0 / max(self.target_fps, 1)
+        if now - self._last_draw >= min_draw_dt:
             self._last_draw = now
             canvas = self.fig.canvas
-            # Use full redraw to keep widget controls stable and visible
-            # during resize/interactions across backends.
-            canvas.draw_idle()
+            if self._blit_ready and not needs_full_redraw:
+                canvas.restore_region(self._full_bg)
+                self.ax.draw_artist(self.melody_artist)
+                self.ax.draw_artist(self.chord_artist)
+                canvas.blit(self.fig.bbox)
+                canvas.flush_events()
+            else:
+                canvas.draw_idle()
 
     def _on_draw(self, event):
         if event.canvas is self.fig.canvas:
             self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+            if self.fig.canvas.supports_blit:
+                self._full_bg = self.fig.canvas.copy_from_bbox(self.fig.bbox)
+                self._blit_ready = self._full_bg is not None
+            else:
+                self._full_bg = None
+                self._blit_ready = False
 
     def close(self):
         if self.render_timer.callbacks:
