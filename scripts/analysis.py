@@ -12,6 +12,7 @@ filename = "My_Heart_Will_Go_On.mid"
 chord_overlay_filename = "My_Heart_Will_Go_On_combined.mid"
 # filename = "beethooven-3rd-movement.mid"
 channel_number = 0
+AUDIO_PLAYBACK = True  # Set True to enable FluidSynth playback/overlay audio.
 
 # Get the project root directory (parent of the scripts directory)
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,6 +73,7 @@ plot_graph(
     centralities=ctr,
     overlay_chord_midi_name=chord_overlay_filename,
     overlay_melody_options=melody_outputs,
+    enable_playback=AUDIO_PLAYBACK,
 )
 
 

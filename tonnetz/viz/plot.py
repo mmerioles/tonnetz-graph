@@ -263,6 +263,7 @@ def plot_graph(
     centralities: dict | None = None,
     overlay_chord_midi_name: str | None = None,
     overlay_melody_options: dict[str, str] | None = None,
+    enable_playback: bool = True,
 ):
     G = input_graph.copy()
 
@@ -331,7 +332,7 @@ def plot_graph(
 
     overlay = None
 
-    if _AUDIO_AVAILABLE:
+    if enable_playback and _AUDIO_AVAILABLE:
         chord_midi_path = overlay_chord_midi_name or name
         if not os.path.isabs(chord_midi_path):
             candidate = _MIDI_DIR / chord_midi_path
@@ -363,6 +364,8 @@ def plot_graph(
                 melody_track=0,
                 chord_track=1,
             )
+    elif not enable_playback:
+        print("Playback disabled by configuration (--no-playback or equivalent).")
     else:
         print(
             "Audio overlay disabled (missing audio dependencies such as 'mido' or 'pyfluidsynth'):",
@@ -539,9 +542,15 @@ class TonnetzRealtimeOverlay:
         self._audio_channel_by_role = {"melody": 0, "chords": 1}
         self._audio_lock = threading.Lock()
         if soundfont_path:
-            self.audio = FluidSynthPlayer(soundfont_path)
-            self.audio.setup_channel(0, bank=0, preset=0, volume=120, pan=64)
-            self.audio.setup_channel(1, bank=0, preset=0, volume=102, pan=64)
+            try:
+                self.audio = FluidSynthPlayer(soundfont_path)
+                self.audio.setup_channel(0, bank=0, preset=0, volume=120, pan=64)
+                self.audio.setup_channel(1, bank=0, preset=0, volume=102, pan=64)
+            except Exception as e:
+                print(f"Playback unavailable; running visual overlay only: {e}")
+                self.audio = None
+        else:
+            print("Playback unavailable; SoundFont not found. Running visual overlay only.")
 
         self.is_playing = False
         self.t0 = 0.0
