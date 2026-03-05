@@ -8,10 +8,10 @@ from tonnetz.graph.centrality import get_centralities
 from tonnetz.gen.walk import biased_random_walk, purely_random_sequence
 from tonnetz.gen.create_midi import create_midi_from_list
 
-filename = "My_Heart_Will_Go_On.mid"
-chord_overlay_filename = "My_Heart_Will_Go_On_combined.mid"
+filename = "Knockin_on_Heaven_Door.mid"
+chord_overlay_filename = "Knockin_on_Heaven_Door_combined.mid"
 # filename = "beethooven-3rd-movement.mid"
-channel_number = 0
+channel_number = 2
 ENABLE_OVERLAY = True  # Set True to enable playback overlay (it works visually even if you dont have fluidsynth installed)
 
 # Get the project root directory (parent of the scripts directory)
