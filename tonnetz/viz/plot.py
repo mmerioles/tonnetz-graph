@@ -263,6 +263,7 @@ def plot_graph(
     centralities: dict | None = None,
     overlay_chord_midi_name: str | None = None,
     overlay_melody_options: dict[str, str] | None = None,
+    enable_playback: bool = True,
 ):
     G = input_graph.copy()
 
@@ -331,7 +332,7 @@ def plot_graph(
 
     overlay = None
 
-    if _AUDIO_AVAILABLE:
+    if enable_playback and _AUDIO_AVAILABLE:
         chord_midi_path = overlay_chord_midi_name or name
         if not os.path.isabs(chord_midi_path):
             candidate = _MIDI_DIR / chord_midi_path
@@ -363,6 +364,8 @@ def plot_graph(
                 melody_track=0,
                 chord_track=1,
             )
+    elif not enable_playback:
+        print("Playback disabled by configuration -- Check your flags in analysis.py")
     else:
         print(
             "Audio overlay disabled (missing audio dependencies such as 'mido' or 'pyfluidsynth'):",
@@ -413,8 +416,16 @@ def plot_graph(
 
         # Add radio button controls
         rax = fig.add_axes([0.02, 0.35, 0.17, 0.25])
-        radio = RadioButtons(rax, ("degree", "betweenness", "eigenvector"), active=0)
+        # Avoid widget-level blitting; overlay uses its own blit path.
+        radio = RadioButtons(
+            rax,
+            ("degree", "betweenness", "eigenvector"),
+            active=0,
+            useblit=False,
+        )
         rax.set_title("Centrality", fontsize=11)
+        if overlay:
+            overlay.register_ui_axes(rax)
 
         def on_change(label: str):
             vals = metric_values(label)
@@ -481,7 +492,12 @@ class TonnetzRealtimeOverlay:
         self.xy = np.array([self.node_pos[n] for n in self.nodes], dtype=float)
 
         self.background = None
+        self._full_bg = None
+        self._blit_ready = False
+        self._needs_full_redraw = False
         self.fig.canvas.mpl_connect("draw_event", self._on_draw)
+        self.fig.canvas.mpl_connect("resize_event", self._on_resize)
+        self._ui_axes: list[plt.Axes] = []
 
         sizes = np.array(self.node_artist.get_sizes(), dtype=float)
         if sizes.size == 1 and len(self.nodes) > 1:
@@ -496,6 +512,7 @@ class TonnetzRealtimeOverlay:
             edgecolors="red",
             linewidths=2.5,
             zorder=10,
+            animated=True,
         )
         self.chord_artist = ax.scatter(
             [],
@@ -505,6 +522,7 @@ class TonnetzRealtimeOverlay:
             edgecolors="limegreen",
             linewidths=2.2,
             zorder=9,
+            animated=True,
         )
 
         self.active_melody_nodes: set[int] = set()
@@ -534,15 +552,21 @@ class TonnetzRealtimeOverlay:
         self._audio_channel_by_role = {"melody": 0, "chords": 1}
         self._audio_lock = threading.Lock()
         if soundfont_path:
-            self.audio = FluidSynthPlayer(soundfont_path)
-            self.audio.setup_channel(0, bank=0, preset=0, volume=120, pan=64)
-            self.audio.setup_channel(1, bank=0, preset=0, volume=102, pan=64)
+            try:
+                self.audio = FluidSynthPlayer(soundfont_path)
+                self.audio.setup_channel(0, bank=0, preset=0, volume=120, pan=64)
+                self.audio.setup_channel(1, bank=0, preset=0, volume=102, pan=64)
+            except Exception as e:
+                print(f"Playback unavailable; running visual overlay only: {e}")
+                self.audio = None
+        else:
+            print("Playback unavailable; SoundFont not found. Running visual overlay only.")
 
         self.is_playing = False
         self.t0 = 0.0
 
         ax_play = fig.add_axes([0.85, 0.92, 0.12, 0.06])
-        self.btn = Button(ax_play, "Play")
+        self.btn = Button(ax_play, "Play", useblit=False)
 
         ax_bpm = fig.add_axes([0.70, 0.92, 0.13, 0.06])
         self.bpm_box = TextBox(ax_bpm, "BPM", initial=f"{self.base_bpm:.2f}")
@@ -551,8 +575,13 @@ class TonnetzRealtimeOverlay:
             # Keep selector comfortably inside figure bounds with enough room
             # for filename-style labels.
             rax_melody = fig.add_axes([0.72, 0.62, 0.26, 0.28])
-            self.melody_radio = RadioButtons(rax_melody, tuple(self.melody_labels), active=0)
-            rax_melody.set_title("Melody", fontsize=10)
+            # Avoid widget-level blitting; overlay uses its own blit path.
+            self.melody_radio = RadioButtons(
+                rax_melody,
+                tuple(self.melody_labels),
+                active=0,
+                useblit=False,
+            )
             for lbl in self.melody_radio.labels:
                 lbl.set_fontsize(8)
                 lbl.set_clip_on(True)
@@ -561,7 +590,9 @@ class TonnetzRealtimeOverlay:
         self.btn.on_clicked(self._toggle_play)
 
         self._last_draw = 0.0
-        self.render_timer = fig.canvas.new_timer(interval=16)  # ~60 FPS visual updates
+        self.target_fps = self._detect_target_fps()
+        interval_ms = max(1000 // max(self.target_fps, 1), 1)
+        self.render_timer = fig.canvas.new_timer(interval=interval_ms)
         self.render_timer.add_callback(self._on_render_tick)
 
         self._state_lock = threading.Lock()
@@ -570,10 +601,22 @@ class TonnetzRealtimeOverlay:
         self._playback_done = False
         self._dirty_visual = False
 
+        self.register_ui_axes(ax_play, ax_bpm)
+        if self.melody_radio is not None:
+            self.register_ui_axes(self.melody_radio.ax)
+
         # Force an initial full render after controls are created so widget
         # axes are visible immediately (not only after a resize redraw).
         self.fig.canvas.draw()
-        self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+
+    def _detect_target_fps(self) -> int:
+        raw = os.getenv("TONNETZ_OVERLAY_FPS", "").strip()
+        if raw and raw.isdigit():
+            val = int(raw)
+            if 5 <= val <= 120:
+                return val
+        # Lower default FPS for broader low-spec compatibility.
+        return 30
 
     def _load_selected_melody_events(self) -> list[MidiEvent]:
         if not self.selected_melody_label:
@@ -637,6 +680,7 @@ class TonnetzRealtimeOverlay:
             self.active_chord_note_counts.clear()
             self._dirty_visual = True
             self._playback_done = False
+            self._needs_full_redraw = True
         self._apply_highlight()
 
         self.btn.label.set_text("Stop")
@@ -681,6 +725,7 @@ class TonnetzRealtimeOverlay:
             self.active_chord_note_counts.clear()
             self._playback_done = False
             self._dirty_visual = True
+            self._needs_full_redraw = True
         self._apply_highlight()
 
     def _read_bpm(self) -> float | None:
@@ -796,6 +841,9 @@ class TonnetzRealtimeOverlay:
         with self._state_lock:
             melody_active = [n for n in self.active_melody_nodes if n in self.node_to_i]
             chord_active = [n for n in self.active_chord_nodes if n in self.node_to_i]
+            needs_full_redraw = self._needs_full_redraw
+            if needs_full_redraw:
+                self._needs_full_redraw = False
 
         if not melody_active:
             self.melody_artist.set_offsets(np.empty((0, 2)))
@@ -819,16 +867,58 @@ class TonnetzRealtimeOverlay:
             self.chord_artist.set_sizes(c_sizes)
 
         now = time.perf_counter()
-        if now - self._last_draw >= 1.0 / 60.0:
+        min_draw_dt = 1.0 / max(self.target_fps, 1)
+        if now - self._last_draw >= min_draw_dt:
             self._last_draw = now
             canvas = self.fig.canvas
-            # Use full redraw to keep widget controls stable and visible
-            # during resize/interactions across backends.
-            canvas.draw_idle()
+            if self._blit_ready and not needs_full_redraw:
+                canvas.restore_region(self.background)
+                self.ax.draw_artist(self.melody_artist)
+                self.ax.draw_artist(self.chord_artist)
+                ui_bboxes = self._draw_ui_axes_for_blit(canvas)
+                canvas.blit(self.ax.bbox)
+                for bbox in ui_bboxes:
+                    canvas.blit(bbox)
+                canvas.flush_events()
+            else:
+                canvas.draw_idle()
 
     def _on_draw(self, event):
         if event.canvas is self.fig.canvas:
             self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
+            self._full_bg = None
+            self._blit_ready = bool(self.background is not None and self.fig.canvas.supports_blit)
+
+    def _on_resize(self, event):
+        if event.canvas is self.fig.canvas:
+            with self._state_lock:
+                self._needs_full_redraw = True
+            self.fig.canvas.draw_idle()
+
+    def register_ui_axes(self, *axes: plt.Axes):
+        changed = False
+        for ui_ax in axes:
+            if ui_ax is None:
+                continue
+            if ui_ax not in self._ui_axes:
+                self._ui_axes.append(ui_ax)
+                changed = True
+        if changed:
+            with self._state_lock:
+                self._needs_full_redraw = True
+            self.fig.canvas.draw_idle()
+
+    def _draw_ui_axes_for_blit(self, canvas):
+        renderer = canvas.get_renderer()
+        graph_bbox = self.ax.bbox
+        redrawn_bboxes = []
+        for ui_ax in self._ui_axes:
+            if ui_ax.figure is not self.fig or not ui_ax.get_visible():
+                continue
+            if ui_ax.bbox.overlaps(graph_bbox):
+                ui_ax.draw(renderer)
+                redrawn_bboxes.append(ui_ax.bbox)
+        return redrawn_bboxes
 
     def close(self):
         if self.render_timer.callbacks:

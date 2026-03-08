@@ -34,6 +34,16 @@ uv sync
 ```
 For audio playback features, you need to install FluidSynth: https://www.fluidsynth.org/
 
+Note: These instructions are for windows
+
+Open powershell as administrator and run the following to install chocolatey
+```bash
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+```
+After installing chocolatey, install fluid synth
+```bash
+choco install fluidsynth
+```
 ## Usage
 To run a test, please run your desired scripts using uv
 ```bash
