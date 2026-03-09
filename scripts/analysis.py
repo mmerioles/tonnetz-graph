@@ -1,4 +1,7 @@
 import os
+import csv
+import random
+
 from tonnetz.midi.parser import gen_transition_poly
 from tonnetz.graph.builder import build_graph
 from tonnetz.viz.plot import plot_graph, plot_degree_distribution
@@ -8,11 +11,36 @@ from tonnetz.graph.centrality import get_centralities
 from tonnetz.gen.walk import biased_random_walk, purely_random_sequence
 from tonnetz.gen.create_midi import create_midi_from_list
 
-filename = "Knockin_on_Heaven_Door.mid"
-chord_overlay_filename = "Knockin_on_Heaven_Door_combined.mid"
+filename = "My_Heart_Will_Go_On.mid"
+chord_overlay_filename = "My_Heart_Will_Go_On_combined.mid"
 # filename = "beethooven-3rd-movement.mid"
-channel_number = 2
+channel_number = 0
 ENABLE_OVERLAY = True  # Set True to enable playback overlay (it works visually even if you dont have fluidsynth installed)
+LSTM_SEQUENCE_COUNT = 3
+
+# For adding CSV formatted sequences
+def load_random_sequences(csv_path: str, count: int) -> list[tuple[int, list[int]]]:
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        rows = list(reader)
+
+    if not rows:
+        raise ValueError(f"No generated sequences found in {csv_path}")
+
+    first_row = rows[0]
+    data_rows = rows[1:] if first_row and first_row[0].startswith("step_") else rows
+    if len(data_rows) < count:
+        raise ValueError(f"Expected at least {count} generated sequences in {csv_path}")
+
+    rng = random.Random()
+    selected_indices = rng.sample(range(len(data_rows)), count)
+    return [
+        (
+            seq_idx,
+            [int(note) for note in data_rows[seq_idx] if str(note).strip()],
+        )
+        for seq_idx in selected_indices
+    ]
 
 # Get the project root directory (parent of the scripts directory)
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -62,6 +90,25 @@ create_midi_from_list(
     note_length_beats=0.5,
 )
 melody_outputs[random_name] = random_name
+
+
+# Add three randomly selected LSTM/generated sequences from the dataset CSV.
+generated_seq_csv = os.path.join(project_root, "data", "sequences.csv")
+if os.path.exists(generated_seq_csv):
+    for idx, (selected_seq_idx, generated_sequence) in enumerate(
+        load_random_sequences(generated_seq_csv, LSTM_SEQUENCE_COUNT),
+        start=1,
+    ):
+        output_name = f"rw_melody_lstm{idx}.mid"
+        create_midi_from_list(
+            generated_sequence,
+            output_path=os.path.join(raw_midi_dir, output_name),
+            bpm=88.0,
+            channel=0,
+            velocity=92,
+            note_length_beats=0.5,
+        )
+        melody_outputs[f"rw_melody_lstm{idx}_seq{selected_seq_idx}"] = output_name
 
 # Build the graph and plot it
 G = build_graph(transition_matrix)
