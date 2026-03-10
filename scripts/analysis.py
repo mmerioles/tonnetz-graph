@@ -1,6 +1,7 @@
 import os
 import csv
 import random
+import ast
 
 from tonnetz.midi.parser import gen_transition_poly
 from tonnetz.graph.builder import build_graph
@@ -34,13 +35,28 @@ def load_random_sequences(csv_path: str, count: int) -> list[tuple[int, list[int
 
     rng = random.Random()
     selected_indices = rng.sample(range(len(data_rows)), count)
-    return [
-        (
-            seq_idx,
-            [int(note) for note in data_rows[seq_idx] if str(note).strip()],
-        )
-        for seq_idx in selected_indices
-    ]
+    return [(seq_idx, _parse_generated_sequence_row(data_rows[seq_idx])) for seq_idx in selected_indices]
+
+
+def _parse_generated_sequence_row(row: list[str]) -> list[int]:
+    non_empty_values = [value.strip() for value in row if str(value).strip()]
+    if not non_empty_values:
+        return []
+
+    raw_value = ",".join(non_empty_values)
+    try:
+        parsed_value = ast.literal_eval(raw_value)
+    except (SyntaxError, ValueError):
+        parsed_value = None
+    if isinstance(parsed_value, str):
+        try:
+            parsed_value = ast.literal_eval(parsed_value)
+        except (SyntaxError, ValueError):
+            parsed_value = None
+    if isinstance(parsed_value, list):
+        return [int(note) for note in parsed_value]
+
+    return [int(note) for note in non_empty_values]
 
 # Get the project root directory (parent of the scripts directory)
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -93,7 +109,7 @@ melody_outputs[random_name] = random_name
 
 
 # Add three randomly selected LSTM/generated sequences from the dataset CSV.
-generated_seq_csv = os.path.join(project_root, "data", "sequences.csv")
+generated_seq_csv = os.path.join(project_root, "data", "lstm_generated_seq (2).csv")
 if os.path.exists(generated_seq_csv):
     for idx, (selected_seq_idx, generated_sequence) in enumerate(
         load_random_sequences(generated_seq_csv, LSTM_SEQUENCE_COUNT),
