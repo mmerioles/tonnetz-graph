@@ -5,7 +5,7 @@ import torch.functional as F
 
 notes_class=49
 class LSTM(nn.Module):
-    def __init__(self,latent_dim=10,layer_count=2,embedding_dim=49,notes_class=notes_class,dropout=0.3):
+    def __init__(self,latent_dim=50,layer_count=2,embedding_dim=30,notes_class=notes_class,dropout=0.3):
         super().__init__()
         self.latent_dim=latent_dim
         self.layer_count=layer_count

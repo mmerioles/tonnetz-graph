@@ -1,11 +1,12 @@
 import torch
 import torch.nn.functional as F
-from model import LSTM,notes_class
 import numpy as np
 import pandas as pd
 import ast
 from torch.utils.data import DataLoader, SubsetRandomSampler
-import datagenerator
+from model import LSTM,notes_class
+from datagenerator import GenerateDataMap
+
 
 def generate_seq(model,seed,length=128,temperature=1.0,top_k=10,device=None):
     generated_seq=[]
@@ -25,6 +26,8 @@ def generate_seq(model,seed,length=128,temperature=1.0,top_k=10,device=None):
 
             logit=logit/temperature
             top_vals,top_idx=torch.topk(logit,top_k)
+            print(logit.argmax().item())  # what's the top prediction before top_k?
+            print(logit.topk(3).indices)
             probabilty=F.softmax(top_vals,dim=-1)
             picked=torch.multinomial(probabilty,1) #pick 1 from the multinomial distribution
             token_picked=top_idx[picked].item()
@@ -37,13 +40,13 @@ def generate_seq(model,seed,length=128,temperature=1.0,top_k=10,device=None):
 
 
 
-latent_dim=10
+latent_dim=50
 layers_count=2
-embedding_dim=49
+embedding_dim=30
 dropout=0.3
 train_split=0.9
 
-data=pd.read_csv("/tonnetz-graph/data/lstm_data.csv") 
+data=pd.read_csv("D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/lstm_data.csv") 
 x=np.array([ast.literal_eval(seq) for seq in data['x']],dtype=np.int32)
 y=np.array(data['y'],dtype=np.int32)
 till=int(len(data)*train_split)
@@ -51,21 +54,22 @@ val_size = len(data) - till
 indices = np.random.randint(0, val_size, size=500)
 # indices=np.random.randint(till+1,len(data),size=500)
 sampler=SubsetRandomSampler(indices)
-validation_dataset=DataLoader(datagenerator.GenerateDataMap(x[till:],y[till:]),sampler=sampler)
+validation_dataset=DataLoader(GenerateDataMap(x[till:],y[till:]),sampler=sampler)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 model=LSTM(latent_dim,layers_count,embedding_dim,notes_class,dropout)
 
-model.load_state_dict(torch.load('/tonnetz-graph/data/LSTM_checkpt.pth'))
+model.load_state_dict(torch.load('D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/LSTM_checkpt.pth'))
 model.to(device=device).eval()
-output_path = '/tonnetz-graph/data/lstm_generated_seq.csv'
+output_path = 'D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/lstm_generated_seq.csv'
 with open(output_path,'w') as f:
     for x_b,_ in validation_dataset:
         # print(x_b.shape)
-        seed=x_b[0]
+        seed=x_b[0].to(device) 
 
-        output=generate_seq(model=model,seed=seed,length=30,temperature=0.7,top_k=9)
+        output=generate_seq(model=model,seed=seed,length=30,temperature=0.7,top_k=3,device=device)
+        # print(output)
         f.write(f"'{output}'\n")
 
 

@@ -32,8 +32,8 @@ def create_seq(path_in,path_out,seq_len=31): #didnt add stride0
                 # inp,out= np.array(x),np.array(y)
                 f_out.write(f'"{x}",{y}\n')
 
-path_in='/tonnetz-graph/data/sequences.csv'
-path_out='/tonnetz-graph/data/lstm_data.csv'
+path_in='D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/sequences.csv'
+path_out='D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/lstm_data.csv'
 
 create_seq(path_in,path_out)
 
