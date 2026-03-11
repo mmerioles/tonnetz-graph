@@ -9,16 +9,15 @@ class GenerateDataMap(Dataset):
         self.x=torch.tensor(seq,dtype=torch.long)
         self.y=torch.tensor(target,dtype=torch.long)
 
-    def __len__(self):              # <-- required by DataLoader
+    def __len__(self):             
         return len(self.x)
 
-    def __getitem__(self, idx):     # <-- required by DataLoader
+    def __getitem__(self, idx):    
         return self.x[idx], self.y[idx]
     
 
-def create_seq(path_in,path_out,seq_len=31): #didnt add stride0
-    # x=[]
-    # y=[]
+def create_seq(path_in,path_out,seq_len=31):
+
     with open(path_in,'r') as f ,open(path_out,'w') as f_out:
         next(f) 
         f_out.write('x,y\n')
@@ -28,12 +27,10 @@ def create_seq(path_in,path_out,seq_len=31): #didnt add stride0
                 x=values[i:i+seq_len]
 
                 y=values[i+seq_len]
-                # f_out.write()
-                # inp,out= np.array(x),np.array(y)
                 f_out.write(f'"{x}",{y}\n')
 
-path_in='D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/sequences.csv'
-path_out='D:/aditi/Quarter1/ECE_227/tonnetz-graph/data/lstm_data.csv'
+path_in='/data/sequences.csv'
+path_out='/data/lstm_data.csv'
 
 create_seq(path_in,path_out)
 
