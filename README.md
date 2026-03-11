@@ -51,6 +51,18 @@ uv run tests/test_centrality.py # Debug print out centralities
 uv run tests/test_statistics.py # Debug print out statistics
 uv run tests/test_plot.py # Debug print graph
 ```
+To generate sequences, edit this section within `play_interval_lstm.py`
+```bash
+CSV_FILE = "lstm_generated_seq (3).csv"
+NUM_SEQUENCES = 12
+INCLUDE_SEQUENCES = [222,333,444]
+START_NOTE = "E4"
+BPM = 120 
+```
+And then run using 
+```bash
+uv run scripts/play_interval_lstm.py
+```
 To smoke check against pytest, simply run the following
 ```bash
 uv run pytest
