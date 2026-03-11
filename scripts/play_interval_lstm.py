@@ -11,7 +11,7 @@ import mido
 
 CSV_FILE = "lstm_generated_seq (5).csv"
 NUM_SEQUENCES = 12
-INCLUDE_SEQUENCES = [222,333,444]
+INCLUDE_SEQUENCES = [222, 333, 444]
 START_NOTE = "E4"
 BPM = 120
 
@@ -37,6 +37,7 @@ NOTE_TO_SEMITONE = {
 }
 
 RANDOM_SEED = 7
+
 
 def main() -> None:
     root = Path(__file__).resolve().parent.parent
@@ -93,7 +94,8 @@ def note_to_midi(note: str) -> int:
 
 
 def token_to_semitones(token: int) -> int:
-    return token - 25 if token <= 24 else token - 24
+    # return token - 25 if token <= 24 else token - 24
+    return token - 26
 
 
 def write_midi(tokens: list[int], start_note: int, output_path: Path) -> None:
@@ -113,10 +115,22 @@ def write_midi(tokens: list[int], start_note: int, output_path: Path) -> None:
         if active_note is None:
             return
         track.append(
-            mido.Message("note_on", note=active_note, velocity=72, channel=0, time=rest_steps * step_ticks)
+            mido.Message(
+                "note_on",
+                note=active_note,
+                velocity=72,
+                channel=0,
+                time=rest_steps * step_ticks,
+            )
         )
         track.append(
-            mido.Message("note_off", note=active_note, velocity=0, channel=0, time=active_steps * step_ticks)
+            mido.Message(
+                "note_off",
+                note=active_note,
+                velocity=0,
+                channel=0,
+                time=active_steps * step_ticks,
+            )
         )
         active_note = None
         active_steps = 0
