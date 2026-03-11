@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import argparse
 import random
 import shutil
 import subprocess
@@ -9,11 +10,13 @@ from pathlib import Path
 import mido
 
 
-CSV_FILE = "lstm_generated_seq (5).csv"
+CSV_FILE = "lstm_generated_seq (6).csv"
 NUM_SEQUENCES = 12
 INCLUDE_SEQUENCES = [222, 333, 444]
 START_NOTE = "E4"
 BPM = 120
+NOTE_RESOLUTION = "16th"
+#NOTE_RESOLUTION = "8th"
 
 
 NOTE_TO_SEMITONE = {
@@ -55,7 +58,7 @@ def main() -> None:
         midi_path = output_dir / f"{csv_path.stem}_seq_{index + 1:03d}.mid"
         wav_path = output_dir / f"{csv_path.stem}_seq_{index + 1:03d}.wav"
 
-        write_midi(tokens, start_note, midi_path)
+        write_midi(tokens, start_note, midi_path, NOTE_RESOLUTION)
         render_wav(midi_path, wav_path, soundfont_path)
         midi_path.unlink(missing_ok=True)
         print(f"Wrote {wav_path}")
@@ -98,7 +101,12 @@ def token_to_semitones(token: int) -> int:
     return token - 26
 
 
-def write_midi(tokens: list[int], start_note: int, output_path: Path) -> None:
+def write_midi(
+    tokens: list[int],
+    start_note: int,
+    output_path: Path,
+    note_resolution: str,
+) -> None:
     midi = mido.MidiFile(ticks_per_beat=480)
     track = mido.MidiTrack()
     midi.tracks.append(track)
@@ -108,7 +116,7 @@ def write_midi(tokens: list[int], start_note: int, output_path: Path) -> None:
     active_note: int | None = None
     active_steps = 0
     rest_steps = 0
-    step_ticks = 120
+    step_ticks = 240 if note_resolution == "8th" else 120
 
     def flush_note() -> None:
         nonlocal active_note, active_steps, rest_steps

@@ -53,11 +53,13 @@ uv run tests/test_plot.py # Debug print graph
 ```
 To generate sequences, edit this section within `play_interval_lstm.py`
 ```bash
-CSV_FILE = "lstm_generated_seq (3).csv"
+CSV_FILE = "lstm_generated_seq (6).csv"
 NUM_SEQUENCES = 12
 INCLUDE_SEQUENCES = [222,333,444]
 START_NOTE = "E4"
-BPM = 120 
+BPM = 120
+NOTE_RESOLUTION = "16th"
+#NOTE_RESOLUTION = "8th"
 ```
 And then run using 
 ```bash
