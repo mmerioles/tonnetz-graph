@@ -27,10 +27,12 @@ This project models music with Tonnetz-inspired weighted directed graphs, where 
 
 ## Demo
 
-This is a demo of the random walks generated based from the polyphonic transition matrix parsed from Céline Dion's "My Heart Will Go On". The first track is the original midi, with the green highlights showing the chords, and the red being the melody. Subsequent playback shows walks based off degree, betweenness, and eigenvector centrality overlayed with the original chord track.
+This is a demo of random walks generated from the polyphonic transition matrix parsed from Celine Dion's "My Heart Will Go On." The first track is the original MIDI (green = chords, red = melody). Subsequent playback shows degree-, betweenness-, and eigenvector-based walks overlaid with the original chord track.
 
-<video src="assets/random-walks.mp4" width="320" height="240" controls></video>
-
+<video controls width="720">
+  <source src="https://github.com/mmerioles/tonnetz-graph/raw/main/assets/random-walks.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ## Installation
 First, clone the repository via
@@ -95,4 +97,5 @@ uv run pytest
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
