@@ -32,6 +32,12 @@ This is a demo of random walks generated from the polyphonic transition matrix p
 
 https://github.com/user-attachments/assets/758013fd-b797-460b-9cad-b962aeddce00
 
+Here are some samples of LSTM genereated sequences, they sound pretty interesting
+
+[lstm_generated_seq (5)_seq_444.wav](https://github.com/user-attachments/files/26106996/lstm_generated_seq.5._seq_444.wav)
+[lstm_generated_seq (7)_seq_336.wav](https://github.com/user-attachments/files/26106997/lstm_generated_seq.7._seq_336.wav)
+[lstm_generated_seq (7)_seq_166.wav](https://github.com/user-attachments/files/26106998/lstm_generated_seq.7._seq_166.wav)
+
 
 ## Installation
 First, clone the repository via
