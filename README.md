@@ -1,18 +1,35 @@
 # Tonnetz Graph
 
 ## Overview
+This project models music with Tonnetz-inspired weighted directed graphs, where notes or intervals are nodes and transitions define structure. Using this view, we analyze pieces with network metrics such as degree, betweenness, eigenvector centrality, clustering, diameter, and connected components. We also generate music from the graph using weighted random walks and centrality-biased transitions, and compare those results against an interval-based LSTM generation pipeline.
 
 ## Datasets
 
 ## Project Timeline
 
 1. **Week 1 Goals - Monophonic Tonnetz Graph**
-   - [ ] Parse midi, and build adjacency matrix
+   - [x] Parse midi, and build adjacency matrix
    - [x] Given adjacency matrix, make visualization of graph
    - [x] Given adjacency matrix, find centralities: degree, betweenness, eigenvector
    - [x] Given adjacency matrix, find statistics: degree distributions, clustering coefficient, diameter, giant component
 
-2. **Week 2 Goals - TBD**
+2. **Week 2 Goals - Polyphonic Tonnetz Graph**
+   - [x] Replace mono parsing with polyphonic parsing + analysis support
+   - [x] Add combined MIDI handling (melody/chords tracks) and melody highlighting
+   - [x] Add centrality toggles and graph/statistics plotting improvements
+   - [x] Add audio playback support (FluidSynth)
+
+3. **Week 3 Goals - Sequence Generation + LSTM**
+   - [x] Implement random-walk melody generation with graph/centrality controls
+   - [x] Build interval-based dataset pipeline (single-song and multi-song)
+   - [x] Integrate LSTM training/inference and CSV sequence output workflow
+   - [x] Add playable CSV overlay + 8th/16th note resolution controls and fix semitone conversion
+
+## Demo
+
+This is a demo of the random walks generated based from the polyphonic transition matrix parsed from Céline Dion's "My Heart Will Go On". The first track is the original midi, with the green highlights showing the chords, and the red being the melody. Subsequent playback shows walks based off degree, betweenness, and eigenvector centrality overlayed with the original chord track.
+
+<video src="assets/random-walks.mp4" width="320" height="240" controls></video>
 
 
 ## Installation
