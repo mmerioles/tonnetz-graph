@@ -39,6 +39,29 @@ Here are some samples of LSTM genereated sequences, they sound pretty interestin
 [lstm_generated_seq (7)_seq_166.wav](https://github.com/user-attachments/files/26106998/lstm_generated_seq.7._seq_166.wav)
 
 
+Because the first song includes a key change, we wanted to select another song that stays in a single key and view the effects of that change. For this, we chose an additional song - Knocking on Heaven's Door by Bob Dylan
+
+Original:
+
+https://github.com/user-attachments/assets/573c3ade-809d-4ec2-8f00-1f2b67f5aa37
+
+Pure random-walk
+
+https://github.com/user-attachments/assets/8da1c07a-6990-45b8-888c-05b502aeabf7
+
+Degree-centrality biased random-walk
+
+https://github.com/user-attachments/assets/b873d912-0b11-48dd-982e-8b9c05aa5d46
+
+Betweenness-centrality biased random-walk
+
+https://github.com/user-attachments/assets/17b7b487-63bf-45f5-a784-219906de2c58
+
+Eigenvector-centrlity biased random-walk
+
+https://github.com/user-attachments/assets/60315b0c-4b7c-4630-8e13-946f00272eb4
+
+
 ## Installation
 First, clone the repository via
 ```bash
