@@ -27,12 +27,17 @@ This project models music with Tonnetz-inspired weighted directed graphs, where 
 
 ## Demo
 
-This is a demo of random walks generated from the polyphonic transition matrix parsed from Celine Dion's "My Heart Will Go On." The first track is the original MIDI (green = chords, red = melody). Subsequent playback shows degree-, betweenness-, and eigenvector-based walks overlaid with the original chord track.
+This is a demo of random walks generated from the polyphonic transition matrix parsed from Celine Dion's "My Heart Will Go On." The first track is the original MIDI (green = chords, red = melody). Subsequent playback shows degree, betweenness, and eigenvector-based walks overlaid with the original chord track.
 
-<video controls width="720">
-  <source src="https://github.com/mmerioles/tonnetz-graph/raw/main/assets/random-walks.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
+https://github.com/user-attachments/assets/758013fd-b797-460b-9cad-b962aeddce00
+
+Here are some samples of LSTM genereated sequences, they sound pretty interesting
+
+[lstm_generated_seq (5)_seq_444.wav](https://github.com/user-attachments/files/26106996/lstm_generated_seq.5._seq_444.wav)
+[lstm_generated_seq (7)_seq_336.wav](https://github.com/user-attachments/files/26106997/lstm_generated_seq.7._seq_336.wav)
+[lstm_generated_seq (7)_seq_166.wav](https://github.com/user-attachments/files/26106998/lstm_generated_seq.7._seq_166.wav)
+
 
 ## Installation
 First, clone the repository via
