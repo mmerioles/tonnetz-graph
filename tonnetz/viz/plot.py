@@ -34,6 +34,38 @@ _DEFAULT_SOUNDFONT = _MIDI_DIR / "GeneralUser-GS.sf2"
 _CHANNEL_MAP_CSV = _MIDI_DIR / "mono_channels.csv"
 
 
+def _compute_balanced_layout(G: nx.DiGraph, scale: float = 5.0) -> dict[int, np.ndarray]:
+    """Spread active graph nodes more evenly across the plotting frame."""
+    if G.number_of_nodes() == 0:
+        return {}
+
+    if G.number_of_nodes() == 1:
+        return {next(iter(G.nodes())): np.array([0.0, 0.0], dtype=float)}
+
+    undirected = G.to_undirected()
+    try:
+        pos = nx.spring_layout(
+            undirected,
+            seed=7,
+            k=2.6 / np.sqrt(max(undirected.number_of_nodes(), 1)),
+            iterations=300,
+            weight="weight",
+            scale=1.0,
+        )
+    except Exception:
+        pos = nx.kamada_kawai_layout(undirected, weight="weight", scale=1.0)
+
+    coords = np.array([pos[n] for n in G.nodes()], dtype=float)
+
+    mins = coords.min(axis=0)
+    spans = coords.max(axis=0) - mins
+    spans[spans < 1e-9] = 1.0
+    coords = (coords - mins) / spans
+    coords = (coords - 0.5) * (2.0 * scale)
+
+    return {node: coords[i] for i, node in enumerate(G.nodes())}
+
+
 def _parse_channel_list(raw: str | None) -> list[int]:
     if raw is None:
         return []
@@ -276,7 +308,7 @@ def plot_graph(
     note_labels = {n: all_note_labels[n] for n in G.nodes()}
 
     # Layout + styling
-    node_pos = nx.kamada_kawai_layout(G, scale=5)
+    node_pos = _compute_balanced_layout(G, scale=5)
     degree_centrality = dict(G.in_degree())
     node_colors = [degree_centrality[n] for n in G.nodes()]
     node_sizes = [max(degree_centrality[n] * 60, 40) for n in G.nodes()]
