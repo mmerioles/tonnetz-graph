@@ -19,6 +19,7 @@ channel_number = 2
 ENABLE_OVERLAY = True  # Set True to enable playback overlay (it works visually even if you dont have fluidsynth installed)
 LSTM_SEQUENCE_COUNT = 3
 
+
 # For adding CSV formatted sequences
 def load_random_sequences(csv_path: str, count: int) -> list[tuple[int, list[int]]]:
     with open(csv_path, newline="", encoding="utf-8") as f:
@@ -35,7 +36,10 @@ def load_random_sequences(csv_path: str, count: int) -> list[tuple[int, list[int
 
     rng = random.Random()
     selected_indices = rng.sample(range(len(data_rows)), count)
-    return [(seq_idx, _parse_generated_sequence_row(data_rows[seq_idx])) for seq_idx in selected_indices]
+    return [
+        (seq_idx, _parse_generated_sequence_row(data_rows[seq_idx]))
+        for seq_idx in selected_indices
+    ]
 
 
 def _parse_generated_sequence_row(row: list[str]) -> list[int]:
@@ -57,6 +61,7 @@ def _parse_generated_sequence_row(row: list[str]) -> list[int]:
         return [int(note) for note in parsed_value]
 
     return [int(note) for note in non_empty_values]
+
 
 # Get the project root directory (parent of the scripts directory)
 script_dir = os.path.dirname(os.path.abspath(__file__))

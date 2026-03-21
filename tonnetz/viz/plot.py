@@ -10,6 +10,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import mido
 from matplotlib.widgets import RadioButtons, Button, TextBox
+
 try:
     from tonnetz.midi.player import (
         midi_to_events_ticks,
@@ -18,8 +19,9 @@ try:
         get_initial_bpm,
         scale_events_bpm,
     )
+
     _AUDIO_AVAILABLE = True
-except ImportError as _e:  
+except ImportError as _e:
     _AUDIO_AVAILABLE = False
     _AUDIO_IMPORT_ERROR = _e
 from tonnetz.util.util import create_note_labels
@@ -27,14 +29,16 @@ from tonnetz.util.util import create_note_labels
 MIN_NOTE = 36
 MAX_NOTE = 83
 
-_MODULE_DIR = Path(__file__).resolve().parent         
-_PROJECT_ROOT = _MODULE_DIR.parents[2]                 
+_MODULE_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _MODULE_DIR.parents[2]
 _MIDI_DIR = _PROJECT_ROOT / "tonnetz-graph" / "raw_midi"
 _DEFAULT_SOUNDFONT = _MIDI_DIR / "GeneralUser-GS.sf2"
 _CHANNEL_MAP_CSV = _MIDI_DIR / "mono_channels.csv"
 
 
-def _compute_balanced_layout(G: nx.DiGraph, scale: float = 5.0) -> dict[int, np.ndarray]:
+def _compute_balanced_layout(
+    G: nx.DiGraph, scale: float = 5.0
+) -> dict[int, np.ndarray]:
     """Spread active graph nodes more evenly across the plotting frame."""
     if G.number_of_nodes() == 0:
         return {}
@@ -240,7 +244,9 @@ def _tick_to_sec(
     return start_sec + mido.tick2second(delta, ticks_per_beat, tempo)
 
 
-def _events_for_tracks(midi_path: str, track_indices: list[int] | None) -> list[MidiEvent]:
+def _events_for_tracks(
+    midi_path: str, track_indices: list[int] | None
+) -> list[MidiEvent]:
     if not track_indices:
         return []
 
@@ -253,7 +259,8 @@ def _events_for_tracks(midi_path: str, track_indices: list[int] | None) -> list[
         i
         for i, track in enumerate(mid.tracks)
         if any(
-            (msg.type in ("note_on", "note_off")) and getattr(msg, "note", None) is not None
+            (msg.type in ("note_on", "note_off"))
+            and getattr(msg, "note", None) is not None
             for msg in track
         )
     ]
@@ -262,7 +269,9 @@ def _events_for_tracks(midi_path: str, track_indices: list[int] | None) -> list[
     # 0 => first note-bearing track, 1 => second note-bearing track, etc.
     resolved_indices: list[int] = []
     unique_requested = sorted(set(track_indices))
-    if note_track_indices and all(0 <= idx < len(note_track_indices) for idx in unique_requested):
+    if note_track_indices and all(
+        0 <= idx < len(note_track_indices) for idx in unique_requested
+    ):
         resolved_indices = [note_track_indices[idx] for idx in unique_requested]
     else:
         # Fallback: treat as absolute MIDI track indices.
@@ -281,11 +290,14 @@ def _events_for_tracks(midi_path: str, track_indices: list[int] | None) -> list[
             t_sec = _tick_to_sec(abs_tick, segments, ticks_per_beat)
             if msg.type == "note_on" and msg.velocity > 0:
                 merged.append(MidiEvent(t_sec, "on", int(note), int(msg.velocity)))
-            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
+            elif msg.type == "note_off" or (
+                msg.type == "note_on" and msg.velocity == 0
+            ):
                 merged.append(MidiEvent(t_sec, "off", int(note), 0))
 
     merged.sort(key=lambda e: e.t)
     return merged
+
 
 def plot_graph(
     input_graph: nx.DiGraph,
@@ -318,6 +330,10 @@ def plot_graph(
     # Create figure
     fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(111)
+
+    # Reserve side panels for UI controls so widgets do not overlap the graph.
+    if centralities:
+        ax.set_position([0.24, 0.10, 0.73, 0.82])
 
     # Draw graph edges
     nx.draw_networkx_edges(
@@ -381,7 +397,9 @@ def plot_graph(
                         path = str(candidate)
                 resolved_melody_options[label] = path
 
-        soundfont_path = str(_DEFAULT_SOUNDFONT) if _DEFAULT_SOUNDFONT.exists() else None
+        soundfont_path = (
+            str(_DEFAULT_SOUNDFONT) if _DEFAULT_SOUNDFONT.exists() else None
+        )
 
         if os.path.exists(chord_midi_path):
             overlay = TonnetzRealtimeOverlay(
@@ -396,6 +414,11 @@ def plot_graph(
                 melody_track=0,
                 chord_track=1,
             )
+            # Keep playback widgets in a dedicated right-side panel.
+            if centralities:
+                ax.set_position([0.24, 0.10, 0.50, 0.82])
+            else:
+                ax.set_position([0.08, 0.10, 0.66, 0.82])
     elif not enable_playback:
         print("Playback disabled by configuration -- Check your flags in analysis.py")
     else:
@@ -446,8 +469,9 @@ def plot_graph(
         def sizes_from(vals: np.ndarray) -> np.ndarray:
             return np.array([max(v * 6000, 40) for v in vals], dtype=float)
 
-        # Add radio button controls
-        rax = fig.add_axes([0.02, 0.35, 0.17, 0.25])
+        # Add radio button controls in a dedicated left-side panel.
+        rax = fig.add_axes([0.03, 0.34, 0.18, 0.28])
+        rax.set_facecolor("#f7f7f7")
         # Avoid widget-level blitting; overlay uses its own blit path.
         radio = RadioButtons(
             rax,
@@ -473,8 +497,8 @@ def plot_graph(
     def on_close(event):
         if overlay:
             overlay.close()
-    
-    fig.canvas.mpl_connect('close_event', on_close)
+
+    fig.canvas.mpl_connect("close_event", on_close)
 
     if show:
         plt.show()
@@ -483,8 +507,7 @@ def plot_graph(
 
 
 def plot_degree_distribution(
-    degree_distribution: dict[int, float],
-    show: bool = True
+    degree_distribution: dict[int, float], show: bool = True
 ) -> None:
     """Plot histogram of degree distribution."""
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -567,15 +590,17 @@ class TonnetzRealtimeOverlay:
         self.chord_midi_path = chord_midi_path
         self.melody_midi_options = melody_midi_options or {}
         self.melody_labels = list(self.melody_midi_options.keys())
-        self.selected_melody_label = self.melody_labels[0] if self.melody_labels else None
+        self.selected_melody_label = (
+            self.melody_labels[0] if self.melody_labels else None
+        )
 
-        self.chord_events0 = _events_for_tracks(self.chord_midi_path, [self.chord_track])
+        self.chord_events0 = _events_for_tracks(
+            self.chord_midi_path, [self.chord_track]
+        )
         self.melody_events0 = self._load_selected_melody_events()
         self.events0: list[tuple[float, str, MidiEvent]] = [
             (e.t, "melody", e) for e in self.melody_events0
-        ] + [
-            (e.t, "chords", e) for e in self.chord_events0
-        ]
+        ] + [(e.t, "chords", e) for e in self.chord_events0]
         self.events0.sort(key=lambda x: x[0])
         self.base_bpm = float(get_initial_bpm(self.chord_midi_path))
         self.events: list[tuple[float, str, MidiEvent]] = self.events0[:]
@@ -592,21 +617,23 @@ class TonnetzRealtimeOverlay:
                 print(f"Playback unavailable; running visual overlay only: {e}")
                 self.audio = None
         else:
-            print("Playback unavailable; SoundFont not found. Running visual overlay only.")
+            print(
+                "Playback unavailable; SoundFont not found. Running visual overlay only."
+            )
 
         self.is_playing = False
         self.t0 = 0.0
 
-        ax_play = fig.add_axes([0.85, 0.92, 0.12, 0.06])
+        # Right-side control panel (outside the graph axes).
+        ax_play = fig.add_axes([0.78, 0.92, 0.20, 0.06])
         self.btn = Button(ax_play, "Play", useblit=False)
 
-        ax_bpm = fig.add_axes([0.70, 0.92, 0.13, 0.06])
+        ax_bpm = fig.add_axes([0.78, 0.84, 0.20, 0.06])
         self.bpm_box = TextBox(ax_bpm, "BPM", initial=f"{self.base_bpm:.2f}")
         self.melody_radio = None
         if self.melody_labels:
-            # Keep selector comfortably inside figure bounds with enough room
-            # for filename-style labels.
-            rax_melody = fig.add_axes([0.72, 0.62, 0.26, 0.28])
+            # Keep selector in the right-side panel with enough room for labels.
+            rax_melody = fig.add_axes([0.78, 0.42, 0.20, 0.38])
             # Avoid widget-level blitting; overlay uses its own blit path.
             self.melody_radio = RadioButtons(
                 rax_melody,
@@ -745,9 +772,13 @@ class TonnetzRealtimeOverlay:
         if self.audio:
             with self._audio_lock:
                 for midi_note in melody_snapshot:
-                    self.audio.note_off(midi_note, channel=self._audio_channel_by_role["melody"])
+                    self.audio.note_off(
+                        midi_note, channel=self._audio_channel_by_role["melody"]
+                    )
                 for midi_note in chord_snapshot:
-                    self.audio.note_off(midi_note, channel=self._audio_channel_by_role["chords"])
+                    self.audio.note_off(
+                        midi_note, channel=self._audio_channel_by_role["chords"]
+                    )
                 self.audio.flush()
 
         with self._state_lock:
@@ -769,7 +800,9 @@ class TonnetzRealtimeOverlay:
         except Exception:
             return None
 
-    def _playback_loop(self, events: list[tuple[float, str, MidiEvent]], start_time: float):
+    def _playback_loop(
+        self, events: list[tuple[float, str, MidiEvent]], start_time: float
+    ):
         idx = 0
         processed = 0
 
@@ -812,9 +845,13 @@ class TonnetzRealtimeOverlay:
     def _dispatch_event(self, role: str, e: MidiEvent):
         node = e.note - MIN_NOTE
 
-        target_nodes = self.active_melody_nodes if role == "melody" else self.active_chord_nodes
+        target_nodes = (
+            self.active_melody_nodes if role == "melody" else self.active_chord_nodes
+        )
         target_counts = (
-            self.active_melody_note_counts if role == "melody" else self.active_chord_note_counts
+            self.active_melody_note_counts
+            if role == "melody"
+            else self.active_chord_note_counts
         )
         out_channel = self._audio_channel_by_role[role]
         changed = False
@@ -824,7 +861,11 @@ class TonnetzRealtimeOverlay:
                 # Treat each pitch as active/inactive per role to avoid stale highlights
                 # when source MIDI has mismatched repeated note_on/note_off pairs.
                 target_counts[e.note] = 1
-                if not was_active and node in self.node_to_i and MIN_NOTE <= e.note <= MAX_NOTE:
+                if (
+                    not was_active
+                    and node in self.node_to_i
+                    and MIN_NOTE <= e.note <= MAX_NOTE
+                ):
                     target_nodes.add(node)
                     changed = True
             if self.audio:
@@ -919,7 +960,9 @@ class TonnetzRealtimeOverlay:
         if event.canvas is self.fig.canvas:
             self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
             self._full_bg = None
-            self._blit_ready = bool(self.background is not None and self.fig.canvas.supports_blit)
+            self._blit_ready = bool(
+                self.background is not None and self.fig.canvas.supports_blit
+            )
 
     def _on_resize(self, event):
         if event.canvas is self.fig.canvas:
